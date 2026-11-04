@@ -8,7 +8,20 @@ Hver gang der pushes til `main`, bygger GitHub Actions en usigneret `.ipa` og l�
 
 **https://github.com/Thyxo/Seal-Life/releases/tag/latest** → `SealLife.ipa`
 
-## Installér med AltStore eller SideStore
+## Installér via source (anbefalet)
+
+Tilføj Sælliv som source i SideStore (eller AltStore), så får du automatisk besked om nye versioner:
+
+1. Åbn SideStore → fanen **Sources** → tryk **+**.
+2. Indsæt denne URL:
+
+   ```
+   https://github.com/Thyxo/Seal-Life/releases/download/latest/source.json
+   ```
+3. Åbn sourcen **Sælliv** → tryk **Free/Get** ved appen.
+4. Nye builds dukker op under **Updates**, hver gang der pushes til `main` (versionen hedder `1.0.<build-nummer>`).
+
+## Installér manuelt med AltStore eller SideStore
 
 Du skal bruge et gratis Apple ID.
 
