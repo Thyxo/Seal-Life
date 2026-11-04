@@ -16,7 +16,7 @@ now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 icon = f"{raw}/App/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
 
 source = {
-    "name": "Sælliv",
+    "name": "Saelliv",
     "identifier": "com.thyxo.seallife.source",
     "subtitle": "En blid vane-tracker med en sæl",
     "description": "Sælliv – vaner, humør og en sæl der svømmer på eventyr. Alt ligger lokalt på telefonen.",
@@ -25,7 +25,7 @@ source = {
     "tintColor": "#5B8DB8",
     "apps": [
         {
-            "name": "Sælliv",
+            "name": "Saelliv",
             "bundleIdentifier": "com.thyxo.seallife",
             "developerName": "Thyxo",
             "subtitle": "En blid vane-tracker med en sæl",

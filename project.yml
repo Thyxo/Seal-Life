@@ -33,7 +33,7 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: Sælliv
+        CFBundleDisplayName: Saelliv
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDevelopmentRegion: da
@@ -72,7 +72,7 @@ targets:
     info:
       path: Widget/Info.plist
       properties:
-        CFBundleDisplayName: Sælliv
+        CFBundleDisplayName: Saelliv
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
