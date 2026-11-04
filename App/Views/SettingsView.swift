@@ -11,6 +11,8 @@ struct SettingsView: View {
     @State private var importing = false
     @State private var status: String?
     @State private var confirmImportURL: URL?
+    @State private var fitting = false
+    @State private var developer = false
 
     var body: some View {
         let p = store.profile
@@ -55,6 +57,10 @@ struct SettingsView: View {
                     Text("Humør: \(Int(p.mood)) / 100 · \(store.moodState.displayName)")
                         .font(.rounded(14, .semibold))
                         .foregroundStyle(Theme.inkSoft)
+                    if p.hat != nil || p.glasses != nil || p.neck != nil {
+                        Button("Tilpas tøjet") { fitting = true }
+                            .buttonStyle(SoftButtonStyle(color: Theme.ice, foreground: Theme.oceanDark))
+                    }
                 }
                 .card()
                 .appearIn(0)
@@ -131,6 +137,22 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .card()
                 .appearIn(0.18)
+
+                Button {
+                    developer = true
+                } label: {
+                    HStack {
+                        Image(systemName: "hammer.fill")
+                        Text("Udviklermenu")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.rounded(15, .bold))
+                    .foregroundStyle(Theme.inkSoft)
+                    .card()
+                }
+                .buttonStyle(BouncyStyle(scale: 0.97))
+                .appearIn(0.22)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
@@ -139,6 +161,12 @@ struct SettingsView: View {
         .onAppear { name = store.profile.name }
         .onDisappear { saveName() }
         .sheet(item: $shareFile) { f in ActivityView(items: [f.url]) }
+        .sheet(isPresented: $fitting) {
+            FitEditorView(itemIDs: [p.hat, p.glasses, p.neck].compactMap { $0 }).presentationCornerRadius(32)
+        }
+        .sheet(isPresented: $developer) {
+            DeveloperView().presentationCornerRadius(32)
+        }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
             if case .success(let url) = result { confirmImportURL = url }
         }

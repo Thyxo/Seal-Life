@@ -19,6 +19,8 @@ final class GameStore {
     var showWelcomeHome = false
     var rewardPulse = 0
     var dataVersion = 0
+    /// Udviklermenu: tving en bestemt tilstand i visningen (nil = normal).
+    var debugStateOverride: MoodState?
 
     init() {
         let schema = Schema([Habit.self, HabitLog.self, MoodEntry.self, SealProfile.self])
@@ -128,6 +130,7 @@ final class GameStore {
 
     /// Det sælen viser lige nu (sover om natten).
     var displayState: MoodState {
+        if let o = debugStateOverride { return o }
         if profile.onVacation { return .vacation }
         if isNight && (allDoneToday || todayTotal == 0) { return .sleeping }
         return moodState
@@ -300,7 +303,7 @@ final class GameStore {
         save()
     }
 
-    private func processDay(_ date: Date) {
+    func processDay(_ date: Date) {
         let list = scheduled(on: date)
         guard !list.isEmpty else { return } // neutral dag
         let c = counts(for: DayKey.key(for: date))
@@ -334,7 +337,7 @@ final class GameStore {
         }
     }
 
-    private func returnFromVacation() {
+    func returnFromVacation() {
         profile.onVacation = false
         profile.missedStreak = 0
         profile.returnStreak = 0
@@ -436,6 +439,62 @@ final class GameStore {
         let first = profile.lastBackup.map { !Calendar.current.isDateInToday($0) } ?? true
         profile.lastBackup = Date()
         if first { profile.fish += Tuning.fishBackup }
+        save()
+    }
+
+    // MARK: - Udviklermenu
+
+    /// Behandler en kunstig dag i fremtiden, hvor intet blev afkrydset.
+    func debugSimulateMissedDay() {
+        let cal = Calendar.current
+        for k in 400..<407 {
+            guard let d = cal.date(byAdding: .day, value: k, to: Date()) else { continue }
+            if !scheduled(on: d).isEmpty {
+                processDay(d)
+                break
+            }
+        }
+        save()
+        syncOutside()
+    }
+
+    func debugStartVacation() {
+        profile.onVacation = true
+        profile.returnStreak = 0
+        profile.vacationPlace = Adventures.vacationSpots.randomElement() ?? "Skagen"
+        save()
+        syncOutside()
+    }
+
+    func debugEndVacation() {
+        returnFromVacation()
+        save()
+        syncOutside()
+    }
+
+    func debugSetMood(_ v: Double) {
+        profile.mood = min(Tuning.moodMax, max(0, v))
+        profile.daysAtZero = 0
+        save()
+        syncOutside()
+    }
+
+    func debugSetDaysAtZero(_ n: Int) {
+        profile.daysAtZero = n
+        if n > 0 { profile.mood = 0 }
+        save()
+        syncOutside()
+    }
+
+    func debugAddFish(_ n: Int) {
+        profile.fish = max(0, profile.fish + n)
+        rewardPulse += 1
+        save()
+        syncOutside()
+    }
+
+    func debugResetOnboarding() {
+        profile.onboarded = false
         save()
     }
 }

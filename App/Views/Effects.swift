@@ -36,7 +36,7 @@ struct AnimatedWaves: View {
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { ctx in
-            let t = ctx.date.timeIntervalSinceReferenceDate * speed
+            let t = ctx.date.timeIntervalSinceReferenceDate * speed * Tuning.Motion.ambientSpeed
             ZStack(alignment: .top) {
                 ForEach(Array(colors.enumerated()), id: \.offset) { i, c in
                     WaveShape(phase: t * (1 + Double(i) * 0.35) + Double(i) * 1.7,
@@ -60,7 +60,7 @@ struct BubblesView: View {
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { ctx in
             Canvas { g, size in
-                let t = ctx.date.timeIntervalSinceReferenceDate
+                let t = ctx.date.timeIntervalSinceReferenceDate * Tuning.Motion.ambientSpeed
                 for i in 0..<count {
                     let seed = Double(i) * 12.9898 + 3
                     let speed = 16 + (sin(seed) * 0.5 + 0.5) * 30
@@ -165,13 +165,13 @@ struct BurstView: View {
         fired = false
         particles = (0..<count).map { i in
             BurstParticle(angle: Double(i) / Double(count) * 2 * .pi + Double.random(in: -0.3...0.3),
-                          distance: CGFloat.random(in: 45...90),
+                          distance: CGFloat.random(in: 35...70),
                           emoji: emojis.randomElement() ?? "✨",
                           spin: Double.random(in: -200...200),
                           size: CGFloat.random(in: 14...22))
         }
         DispatchQueue.main.async {
-            withAnimation(.easeOut(duration: 0.95)) { fired = true }
+            withAnimation(.easeOut(duration: 1.3)) { fired = true }
         }
     }
 }
@@ -270,9 +270,9 @@ struct Breathing: ViewModifier {
     @State private var on = false
     func body(content: Content) -> some View {
         content
-            .scaleEffect(on ? 1 + amount : 1)
+            .scaleEffect(on ? 1 + amount * CGFloat(Tuning.Motion.ambientAmount) : 1)
             .onAppear {
-                withAnimation(.easeInOut(duration: duration).repeatForever(autoreverses: true)) { on = true }
+                withAnimation(.easeInOut(duration: duration / Tuning.Motion.ambientSpeed).repeatForever(autoreverses: true)) { on = true }
             }
     }
 }
@@ -283,9 +283,9 @@ struct Floating: ViewModifier {
     @State private var on = false
     func body(content: Content) -> some View {
         content
-            .offset(y: on ? -distance : distance)
+            .offset(y: (on ? -distance : distance) * CGFloat(Tuning.Motion.ambientAmount))
             .onAppear {
-                withAnimation(.easeInOut(duration: duration).repeatForever(autoreverses: true)) { on = true }
+                withAnimation(.easeInOut(duration: duration / Tuning.Motion.ambientSpeed).repeatForever(autoreverses: true)) { on = true }
             }
     }
 }
@@ -381,15 +381,82 @@ struct WaveProgressBar: View {
                     .frame(width: max(height, g.size.width * min(1, max(0, progress))))
                     .opacity(progress > 0 ? 1 : 0)
                     .overlay(
-                        AnimatedWaves(colors: [Color.white.opacity(0.25)], amplitude: 3, speed: 2)
+                        AnimatedWaves(colors: [Color.white.opacity(0.2)], amplitude: 3, speed: 1)
                             .offset(y: height * 0.35)
                             .clipShape(Capsule())
                     )
-                    .shimmer()
             }
             .clipShape(Capsule())
         }
         .frame(height: height)
         .animation(.spring(response: 0.6, dampingFraction: 0.7), value: progress)
+    }
+}
+
+// MARK: - Hjerter der svæver roligt op og fader væk
+
+struct HeartPuffView: View {
+    var trigger: Int
+    var emojis: [String] = ["🩵", "💙", "🤍"]
+
+    private struct Puff: Identifiable {
+        let id = UUID()
+        let x: CGFloat
+        let drift: CGFloat
+        let size: CGFloat
+        let delay: Double
+        let emoji: String
+    }
+
+    @State private var puffs: [Puff] = []
+
+    var body: some View {
+        ZStack {
+            ForEach(puffs) { p in
+                FadingHeart(emoji: p.emoji, size: p.size, drift: p.drift, delay: p.delay)
+                    .offset(x: p.x)
+            }
+        }
+        .allowsHitTesting(false)
+        .onChange(of: trigger) { _, _ in spawn() }
+    }
+
+    private func spawn() {
+        let n = Tuning.Motion.tapHearts
+        let new = (0..<n).map { i in
+            Puff(x: CGFloat.random(in: -60...60),
+                 drift: CGFloat.random(in: -18...18),
+                 size: CGFloat.random(in: 15...21),
+                 delay: Double(i) * 0.18,
+                 emoji: emojis.randomElement() ?? "🩵")
+        }
+        // Højst et par håndfulde ad gangen.
+        puffs = Array((puffs + new).suffix(n * 2))
+        let ids = Set(new.map(\.id))
+        DispatchQueue.main.asyncAfter(deadline: .now() + Tuning.Motion.heartLifetime + 1) {
+            puffs.removeAll { ids.contains($0.id) }
+        }
+    }
+}
+
+private struct FadingHeart: View {
+    let emoji: String
+    let size: CGFloat
+    let drift: CGFloat
+    let delay: Double
+    @State private var go = false
+    @State private var visible = false
+
+    var body: some View {
+        Text(emoji)
+            .font(.system(size: size))
+            .scaleEffect(go ? 0.75 : 0.5)
+            .offset(x: go ? drift : 0, y: go ? -80 : 0)
+            .opacity(visible ? (go ? 0 : 0.85) : 0)
+            .blur(radius: go ? 2 : 0)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.35).delay(delay)) { visible = true }
+                withAnimation(.easeInOut(duration: Tuning.Motion.heartLifetime).delay(delay + 0.2)) { go = true }
+            }
     }
 }

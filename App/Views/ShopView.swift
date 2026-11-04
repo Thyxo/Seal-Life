@@ -7,6 +7,7 @@ struct ShopView: View {
     @State private var celebrate = 0
     @State private var shake = 0
     @State private var message: String?
+    @State private var fitting = false
     @Namespace private var ns
 
     var body: some View {
@@ -41,6 +42,17 @@ struct ShopView: View {
             .padding(.bottom, 24)
         }
         .background(Theme.cream.ignoresSafeArea())
+        .sheet(isPresented: $fitting) {
+            FitEditorView(itemIDs: previewItemIDs).presentationCornerRadius(32)
+        }
+    }
+
+    private var previewItemIDs: [String] {
+        let p = store.profile
+        let hat = tryOn?.slot == .hat ? tryOn?.id : p.hat
+        let glasses = tryOn?.slot == .glasses ? tryOn?.id : p.glasses
+        let neck = tryOn?.slot == .neck ? tryOn?.id : p.neck
+        return [hat, glasses, neck].compactMap { $0 }
     }
 
     private var preview: some View {
@@ -57,7 +69,22 @@ struct ShopView: View {
                 .frame(width: 170, height: 170)
                 .offset(y: 20)
                 .modifier(Wiggle(active: shake % 2 == 1))
-            BurstView(trigger: celebrate, emojis: ["✨", "🎉", "💙", "🐟"], count: 14)
+            BurstView(trigger: celebrate, emojis: ["✨", "🎉", "💙", "🐟"], count: 10)
+            if !previewItemIDs.isEmpty {
+                Button {
+                    fitting = true
+                } label: {
+                    Label("Tilpas", systemImage: "slider.horizontal.3")
+                        .font(.rounded(14, .bold))
+                        .foregroundStyle(Theme.oceanDark)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(.white.opacity(0.92)))
+                }
+                .buttonStyle(BouncyStyle())
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding(12)
+            }
             if let message {
                 Text(message)
                     .font(.rounded(15, .bold))

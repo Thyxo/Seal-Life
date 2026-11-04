@@ -53,7 +53,7 @@ struct HabitRow: View {
                     let added = store.tap(habit)
                     if added { burst += 1 }
                 }
-                BurstView(trigger: burst, emojis: ["🐟", "✨", "💧"], count: 8)
+                BurstView(trigger: burst, emojis: ["🐟", "✨"], count: 5)
             }
         }
         .padding(14)
@@ -474,7 +474,7 @@ struct StoryView: View {
         ZStack {
             LinearGradient(colors: [Theme.oceanLight, Theme.cream], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
-            FloatingEmoji(emoji: "✨", count: 8, speed: 0.25)
+            FloatingEmoji(emoji: "✨", count: 4, speed: 0.15)
             VStack(spacing: 18) {
                 Spacer()
                 Text("\(place.emoji) \(place.name)")

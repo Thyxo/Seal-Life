@@ -128,9 +128,6 @@ struct SealStageView: View {
             if Calendar.current.component(.month, from: Date()) == 12 {
                 SnowView(count: 26)
             }
-            if state == .happy {
-                FloatingEmoji(emoji: "💙", count: 4).padding(.top, 60)
-            }
 
             VStack(spacing: 0) {
                 topBar
@@ -153,6 +150,9 @@ struct SealStageView: View {
     @ViewBuilder private func sealView(state: MoodState) -> some View {
         let p = store.profile
         ZStack {
+            // Hjerterne ligger bag sælen og fader væk efter et par sekunder.
+            HeartPuffView(trigger: hearts)
+                .offset(y: -60)
             if store.profile.onVacation {
                 PostcardView(place: p.vacationPlace)
                     .frame(width: 200, height: 160)
@@ -179,11 +179,10 @@ struct SealStageView: View {
                             CubicKeyframe(0, duration: 0.25)
                         }
                     }
+                    .contentShape(Rectangle())
                     .onTapGesture { tapSeal() }
                     .sensoryFeedback(.impact(weight: .light), trigger: bounce)
-                BurstView(trigger: hearts, emojis: ["💙", "🩵", "✨"], count: 8)
-                    .offset(y: -40)
-                BurstView(trigger: store.rewardPulse, emojis: ["🐟", "✨", "🐟"], count: 10)
+                BurstView(trigger: store.rewardPulse, emojis: ["🐟", "✨", "🐟"], count: 6)
                     .offset(y: -20)
             }
         }
@@ -232,16 +231,21 @@ struct SwimModifier: ViewModifier {
         if active {
             TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { ctx in
                 let t = ctx.date.timeIntervalSinceReferenceDate
+                let m = Tuning.Motion.self
+                // Masken sidder på sælen selv (før den flyttes), så den aldrig bliver skåret af i siden.
                 content
-                    .rotationEffect(.degrees(sin(t * 1.4) * 6))
-                    .offset(x: CGFloat(sin(t * 0.5)) * 30, y: CGFloat(sin(t * 1.4)) * 6 + 30)
                     .mask(
                         VStack(spacing: 0) {
                             Rectangle()
                             LinearGradient(colors: [.black, .black.opacity(0.35)], startPoint: .top, endPoint: .bottom)
                                 .frame(height: 70)
                         }
+                        .padding(.horizontal, -60)
+                        .padding(.top, -60)
                     )
+                    .rotationEffect(.degrees(sin(t * m.swimSpeed * 2.4) * m.swimRockDegrees))
+                    .offset(x: CGFloat(sin(t * m.swimSpeed) * m.swimDistance),
+                            y: CGFloat(sin(t * m.swimSpeed * 2.4)) * 4 + 30)
             }
         } else {
             content
@@ -319,7 +323,7 @@ struct PostcardView: View {
         .rotationEffect(.degrees(tilt ? 4 : -4))
         .floating(5, duration: 2.4)
         .onAppear {
-            withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) { tilt = true }
+            withAnimation(.easeInOut(duration: 4.5).repeatForever(autoreverses: true)) { tilt = true }
         }
     }
 }
@@ -337,9 +341,9 @@ struct AdventureCard: View {
             HStack(spacing: 10) {
                 Text(store.allDoneToday ? "🏠" : place.emoji)
                     .font(.system(size: 28))
-                    .rotationEffect(.degrees(boat ? 8 : -8))
+                    .rotationEffect(.degrees(boat ? 5 : -5))
                     .onAppear {
-                        withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { boat = true }
+                        withAnimation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true)) { boat = true }
                     }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(store.allDoneToday ? "Hjemme igen!" : "Dagens eventyr")
@@ -358,7 +362,7 @@ struct AdventureCard: View {
                         .padding(.vertical, 9)
                         .background(Capsule().fill(Theme.mintDark))
                         .buttonStyle(BouncyStyle())
-                        .breathing(0.05)
+                        .breathing(0.03)
                 }
             }
             ZStack {

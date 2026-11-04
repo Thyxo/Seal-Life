@@ -1,9 +1,14 @@
 import SwiftUI
+import UserNotifications
 
 @main
 struct SealLifeApp: App {
     @State private var store = GameStore()
     @Environment(\.scenePhase) private var scenePhase
+
+    init() {
+        UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
+    }
 
     var body: some Scene {
         WindowGroup {

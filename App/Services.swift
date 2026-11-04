@@ -228,6 +228,8 @@ struct BackupFile: Codable {
     var habits: [HabitDTO]
     var logs: [LogDTO]
     var moods: [MoodDTO]
+    /// Tøj-justeringer (findes kun i nyere backups).
+    var fits: [String: ItemFit]? = nil
 }
 
 enum BackupError: LocalizedError {
@@ -257,7 +259,8 @@ enum BackupManager {
         let moods = store.allMoods().map {
             BackupFile.MoodDTO(dayKey: $0.dayKey, mood: $0.mood, note: $0.note, createdAt: $0.createdAt)
         }
-        let file = BackupFile(exportedAt: Date(), profile: profile, habits: habits, logs: logs, moods: moods)
+        let file = BackupFile(exportedAt: Date(), profile: profile, habits: habits, logs: logs, moods: moods,
+                              fits: FitStore.shared.fits)
         let enc = JSONEncoder()
         enc.outputFormatting = [.prettyPrinted, .sortedKeys]
         enc.dateEncodingStrategy = .iso8601
@@ -318,6 +321,8 @@ enum BackupManager {
         p.createdAt = d.createdAt
         p.onboarded = true
         p.lastBackup = Date()
+
+        if let fits = file.fits { FitStore.shared.replaceAll(fits) }
 
         try ctx.save()
         store.reloadHabits()

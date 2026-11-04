@@ -10,6 +10,8 @@ struct SealFigure: View {
     var glasses: String? = nil
     var neck: String? = nil
     var animated: Bool = true
+    /// Bruges af tøj-editoren til live-visning; ellers læses de gemte justeringer.
+    var fits: [String: ItemFit]? = nil
 
     var body: some View {
         GeometryReader { geo in
@@ -18,11 +20,11 @@ struct SealFigure: View {
                 if animated {
                     TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { ctx in
                         SealCanvas(color: color, state: state, hat: hat, glasses: glasses, neck: neck,
-                                   s: s, t: ctx.date.timeIntervalSinceReferenceDate, animated: true)
+                                   s: s, t: ctx.date.timeIntervalSinceReferenceDate, animated: true, fits: fits)
                     }
                 } else {
                     SealCanvas(color: color, state: state, hat: hat, glasses: glasses, neck: neck,
-                               s: s, t: 0, animated: false)
+                               s: s, t: 0, animated: false, fits: fits)
                 }
             }
             .frame(width: s, height: s)
@@ -97,6 +99,7 @@ struct SealCanvas: View {
     let s: CGFloat
     let t: Double
     let animated: Bool
+    var fits: [String: ItemFit]? = nil
 
     private static let spots: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [
         (0.33, 0.20, 0.075, 0.045), (0.46, 0.15, 0.06, 0.04), (0.61, 0.19, 0.08, 0.05),
@@ -105,16 +108,22 @@ struct SealCanvas: View {
         (0.68, 0.12, 0.045, 0.03), (0.28, 0.62, 0.04, 0.06), (0.75, 0.63, 0.045, 0.06),
     ]
 
+    private typealias M = Tuning.Motion
+
     private var breathe: CGFloat {
         guard animated else { return 0 }
-        return CGFloat(sin(t * (state == .sleeping ? 1.1 : 2.0)))
+        return CGFloat(sin(t * (state == .sleeping ? M.breatheSpeedSleeping : M.breatheSpeed)))
     }
 
     private var hop: CGFloat {
         guard animated else { return 0 }
         switch state {
-        case .happy: return -CGFloat(max(0, sin(t * 3.0))) * s * 0.04
-        case .content, .vacation: return CGFloat(sin(t * 1.4)) * s * 0.01
+        case .happy:
+            // Blødt, langsomt lille hop (sinus i anden – ingen hårde stød).
+            let v = max(0, sin(t * M.happyHopSpeed))
+            return -CGFloat(v * v) * s * CGFloat(M.happyHopHeight)
+        case .content, .vacation:
+            return CGFloat(sin(t * M.bobSpeed)) * s * CGFloat(M.bobHeight)
         default: return 0
         }
     }
@@ -122,25 +131,28 @@ struct SealCanvas: View {
     private var sway: Double {
         guard animated else { return 0 }
         switch state {
-        case .happy: return sin(t * 3.0) * 3
-        case .sad, .sick: return sin(t * 0.8) * 1.5
-        default: return sin(t * 1.2) * 1.5
+        case .sad, .sick, .sleeping: return sin(t * M.swaySpeed * 0.7) * M.swayDegrees * 0.6
+        default: return sin(t * M.swaySpeed) * M.swayDegrees
         }
     }
 
     private var blink: CGFloat {
         guard animated else { return 1 }
-        let p = t.truncatingRemainder(dividingBy: 4.3)
-        return p < 0.13 ? 0.1 : 1
+        let p = t.truncatingRemainder(dividingBy: M.blinkEvery)
+        return p < 0.14 ? 0.1 : 1
     }
 
     private var flipperAngle: Double {
         guard animated else { return 0 }
         switch state {
-        case .happy: return sin(t * 7) * 16
-        case .sick, .sad, .sleeping: return sin(t * 1.0) * 2
-        default: return sin(t * 1.8) * 6
+        case .happy: return sin(t * M.flipperSpeedHappy) * M.flipperDegreesHappy
+        case .sick, .sad, .sleeping: return sin(t * M.flipperSpeed * 0.6) * 1.5
+        default: return sin(t * M.flipperSpeed) * M.flipperDegrees
         }
+    }
+
+    private func fit(_ id: String) -> ItemFit {
+        fits?[id] ?? FitStore.shared.fit(id)
     }
 
     private var bodyImage: UIImage? {
@@ -167,7 +179,7 @@ struct SealCanvas: View {
                 accessoryLayer
             }
             .frame(width: s, height: s)
-            .scaleEffect(x: 1 + 0.012 * breathe, y: 1 - 0.02 * breathe, anchor: .bottom)
+            .scaleEffect(x: 1 + CGFloat(M.breatheAmount) * breathe, y: 1 - CGFloat(M.breatheAmount) * 1.6 * breathe, anchor: .bottom)
             .rotationEffect(.degrees(sway), anchor: .bottom)
             .offset(y: hop)
 
@@ -180,10 +192,18 @@ struct SealCanvas: View {
 
     private var drawnSeal: some View {
         ZStack {
-            Ellipse().fill(color.flipper)
-                .frame(width: s * 0.22, height: s * 0.11)
-                .rotationEffect(.degrees(-18 + flipperAngle * 0.3))
-                .position(pt(0.80, 0.89))
+            // Bagluffer: sidder bag kroppen og stikker ud nederst til højre.
+            ZStack {
+                Ellipse().fill(color.flipper)
+                    .frame(width: s * 0.20, height: s * 0.10)
+                    .rotationEffect(.degrees(-24 + flipperAngle * 0.3), anchor: .leading)
+                    .offset(x: s * 0.07)
+                Ellipse().fill(color.flipper.opacity(0.85))
+                    .frame(width: s * 0.17, height: s * 0.085)
+                    .rotationEffect(.degrees(-4 + flipperAngle * 0.3), anchor: .leading)
+                    .offset(x: s * 0.07, y: s * 0.03)
+            }
+            .position(pt(0.68, 0.86))
 
             Ellipse()
                 .fill(LinearGradient(colors: [color.bodyLight, color.body], startPoint: .top, endPoint: .bottom))
@@ -207,14 +227,15 @@ struct SealCanvas: View {
 
             face
 
+            // Forluffer: roden ligger inde på kroppen, så de altid hænger fast.
             Ellipse().fill(color.flipper)
-                .frame(width: s * 0.16, height: s * 0.25)
-                .rotationEffect(.degrees(28 + flipperAngle), anchor: .top)
-                .position(pt(0.21, 0.76))
+                .frame(width: s * 0.14, height: s * 0.23)
+                .rotationEffect(.degrees(22 + flipperAngle), anchor: .top)
+                .position(pt(0.255, 0.715))
             Ellipse().fill(color.flipper)
-                .frame(width: s * 0.16, height: s * 0.25)
-                .rotationEffect(.degrees(-28 - flipperAngle), anchor: .top)
-                .position(pt(0.79, 0.76))
+                .frame(width: s * 0.14, height: s * 0.23)
+                .rotationEffect(.degrees(-22 - flipperAngle), anchor: .top)
+                .position(pt(0.745, 0.715))
         }
         .frame(width: s, height: s)
     }
@@ -243,7 +264,7 @@ struct SealCanvas: View {
                 Capsule().fill(Theme.eye.opacity(0.7))
                     .frame(width: s * 0.07, height: s * 0.014)
                     .rotationEffect(.degrees(18)).position(pt(0.63, 0.36))
-                let drop = animated ? CGFloat((t * 0.5).truncatingRemainder(dividingBy: 1)) : 0.3
+                let drop = animated ? CGFloat((t * 0.3).truncatingRemainder(dividingBy: 1)) : 0.3
                 Ellipse().fill(Theme.ocean)
                     .frame(width: s * 0.03, height: s * 0.045)
                     .position(pt(0.62, 0.47 + 0.08 * drop))
@@ -298,7 +319,7 @@ struct SealCanvas: View {
                 .frame(width: s * 0.09, height: s * 0.02)
                 .position(pt(0.5, 0.535))
         case .hungry:
-            let chew = animated ? CGFloat(0.8 + 0.25 * sin(t * 4)) : 1
+            let chew = animated ? CGFloat(0.85 + 0.15 * sin(t * 2)) : 1
             Ellipse().fill(Theme.rose.opacity(0.9))
                 .frame(width: s * 0.04, height: s * 0.045 * chew)
                 .position(pt(0.5, 0.56))
@@ -319,13 +340,19 @@ struct SealCanvas: View {
 
     @ViewBuilder private var accessoryLayer: some View {
         if let n = ShopCatalog.item(neck) {
-            AccessoryView(item: n, s: s).position(pt(0.5, 0.69))
+            AccessoryView(item: n, s: s)
+                .fitted(fit(n.id), s: s)
+                .position(pt(0.5, CGFloat(Tuning.Accessory.neckY)))
         }
         if let g = ShopCatalog.item(glasses ?? (state == .vacation ? "sunglasses" : nil)) {
-            AccessoryView(item: g, s: s).position(pt(0.5, 0.42))
+            AccessoryView(item: g, s: s)
+                .fitted(fit(g.id), s: s)
+                .position(pt(0.5, CGFloat(Tuning.Accessory.glassesY)))
         }
         if let h = ShopCatalog.item(hat) {
-            AccessoryView(item: h, s: s).position(pt(0.5, 0.13))
+            AccessoryView(item: h, s: s)
+                .fitted(fit(h.id), s: s)
+                .position(pt(0.5, CGFloat(Tuning.Accessory.hatY)))
         }
     }
 
@@ -335,7 +362,7 @@ struct SealCanvas: View {
         switch state {
         case .sleeping:
             ForEach(0..<3, id: \.self) { i in
-                let phase = animated ? (t * 0.4 + Double(i) / 3).truncatingRemainder(dividingBy: 1) : Double(i) / 3
+                let phase = animated ? (t * 0.25 + Double(i) / 3).truncatingRemainder(dividingBy: 1) : Double(i) / 3
                 Text("z")
                     .font(.system(size: s * (0.07 + 0.04 * CGFloat(phase)), weight: .heavy, design: .rounded))
                     .foregroundStyle(Theme.oceanDeep)
@@ -345,10 +372,10 @@ struct SealCanvas: View {
         case .sick:
             Text("🌡️")
                 .font(.system(size: s * 0.1))
-                .rotationEffect(.degrees(-35 + (animated ? sin(t * 2) * 5 : 0)))
+                .rotationEffect(.degrees(-35 + (animated ? sin(t * 1.0) * 4 : 0)))
                 .position(pt(0.6, 0.6))
         case .hungry:
-            let bob = animated ? CGFloat(sin(t * 2)) * s * 0.01 : 0
+            let bob = animated ? CGFloat(sin(t * 1.0)) * s * 0.008 : 0
             ZStack {
                 Circle().fill(Color.white).frame(width: s * 0.03).position(pt(0.76, 0.24))
                 Circle().fill(Color.white).frame(width: s * 0.045).position(pt(0.81, 0.17))
@@ -386,6 +413,16 @@ struct AccessoryView: View {
     }
 
     @ViewBuilder private var drawn: some View {
+        if let v = HatDesigns.view(item.id, s: s) {
+            v
+        } else if let v = FaceNeckDesigns.view(item.id, s: s) {
+            v
+        } else {
+            legacy
+        }
+    }
+
+    @ViewBuilder private var legacy: some View {
         switch item.id {
         case "nissehue":
             ZStack {

@@ -53,6 +53,7 @@ struct ShopItem: Identifiable, Hashable {
         switch seasonMonth {
         case 12: return "December"
         case 10: return "Oktober"
+        case 4: return "April"
         default: return "Sæson"
         }
     }
@@ -88,7 +89,7 @@ enum ShopCatalog {
         ShopItem("undervand", "Under vandet", .background, "🐠", Tuning.Price.bgUnderwater),
         ShopItem("nyhavn", "Nyhavn", .background, "⛵", Tuning.Price.bgNyhavn),
         ShopItem("nordlys", "Nordlys", .background, "🌌", Tuning.Price.bgAurora),
-    ]
+    ] + HatDesigns.newItems + FaceNeckDesigns.newItems
 
     static func item(_ id: String?) -> ShopItem? {
         guard let id else { return nil }

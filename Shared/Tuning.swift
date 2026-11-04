@@ -65,6 +65,54 @@ enum Tuning {
     /// Til dette klokkeslæt sover sælen (visning).
     static let wakeHour = 6
 
+    // MARK: - Bevægelse (sælens idle – lavere = roligere)
+
+    enum Motion {
+        /// Vejrtrækning: svingninger pr. sekund (radianer/sek) og styrke.
+        static let breatheSpeed: Double = 1.1
+        static let breatheSpeedSleeping: Double = 0.7
+        static let breatheAmount: Double = 0.012
+        /// Hop når sælen er glad (andel af størrelsen) og tempo.
+        static let happyHopHeight: Double = 0.018
+        static let happyHopSpeed: Double = 1.5
+        /// Lille op/ned-vuggen i andre tilstande.
+        static let bobHeight: Double = 0.006
+        static let bobSpeed: Double = 0.9
+        /// Vuggen fra side til side (grader) og tempo.
+        static let swayDegrees: Double = 1.2
+        static let swaySpeed: Double = 0.7
+        /// Luffe-vinken (grader) og tempo.
+        static let flipperDegrees: Double = 5
+        static let flipperDegreesHappy: Double = 9
+        static let flipperSpeed: Double = 1.1
+        static let flipperSpeedHappy: Double = 1.8
+        /// Blink hvert N. sekund.
+        static let blinkEvery: Double = 5.5
+        /// Svømning på eventyr: vandret afstand (pt) og tempo.
+        static let swimDistance: Double = 22
+        static let swimSpeed: Double = 0.35
+        static let swimRockDegrees: Double = 4
+        /// Hjerter ved tryk: antal og hvor længe de svæver (sek).
+        static let tapHearts = 3
+        static let heartLifetime: Double = 2.6
+        /// Fælles dæmper for baggrundsbevægelser (bølger, skyer, bobler). 1 = som før, lavere = roligere.
+        static let ambientSpeed: Double = 0.55
+        /// Fælles dæmper for hvor meget ting svæver/ånder.
+        static let ambientAmount: Double = 0.65
+    }
+
+    // MARK: - Tilbehør (placering på sælen, andel af sælens størrelse)
+
+    enum Accessory {
+        static let hatY: Double = 0.13
+        static let glassesY: Double = 0.42
+        static let neckY: Double = 0.69
+        /// Grænser i tøj-editoren.
+        static let maxOffset: Double = 0.3
+        static let minScale: Double = 0.4
+        static let maxScale: Double = 2.0
+    }
+
     // MARK: - Priser i butikken (fisk)
 
     enum Price {
@@ -92,5 +140,21 @@ enum Tuning {
         static let bgNyhavn = 140
         static let bgAurora = 160
         static let bgUnderwater = 120
+
+        // Nyt tøj
+        static let beanie = 40
+        static let sailorHat = 45
+        static let viking = 90
+        static let frogHat = 55
+        static let chefHat = 35
+        static let bunnyEars = 50
+        static let heartglasses = 45
+        static let starglasses = 60
+        static let monocle = 75
+
+        static let pearls = 90
+        static let bowtie = 45
+        static let bandana = 35
+        static let lifebuoy = 55
     }
 }
