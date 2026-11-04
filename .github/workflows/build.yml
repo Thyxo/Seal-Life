@@ -1,0 +1,90 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-main
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vis Xcode-version
+        run: xcodebuild -version
+
+      - name: Installér værktøjer
+        run: brew install xcodegen ldid
+
+      - name: Generér Xcode-projekt
+        run: xcodegen generate
+
+      - name: Byg (Release, iphoneos, usigneret)
+        run: |
+          set +e
+          xcodebuild \
+            -project SealLife.xcodeproj \
+            -target SealLife \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build > build.log 2>&1
+          status=$?
+          set -e
+          if [ $status -ne 0 ]; then
+            echo "Build fejlede – fejl:"
+            grep -E "error:" build.log | sed -E 's#^.*/(App|Shared|Widget)/#\1/#' | sort -u | head -40 | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+            tail -80 build.log
+            exit 1
+          fi
+          grep -E "warning:" build.log | sort -u | head -20 || true
+          echo "BUILD OK"
+
+      - name: Signér entitlements ind med ldid
+        run: |
+          APP=build/Release-iphoneos/SealLife.app
+          APPEX=$APP/PlugIns/SealLifeWidget.appex
+          ls -la "$APP" "$APPEX"
+          ldid -SWidget/SealLifeWidget.entitlements "$APPEX/SealLifeWidget"
+          ldid -SApp/SealLife.entitlements "$APP/SealLife"
+          echo "--- app entitlements ---"
+          ldid -e "$APP/SealLife"
+          echo "--- widget entitlements ---"
+          ldid -e "$APPEX/SealLifeWidget"
+
+      - name: Pak .ipa
+        run: |
+          rm -rf Payload SealLife.ipa
+          mkdir Payload
+          cp -R build/Release-iphoneos/SealLife.app Payload/
+          zip -qry SealLife.ipa Payload
+          ls -la SealLife.ipa
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SealLife-ipa
+          path: SealLife.ipa
+
+      - name: Opdatér release "latest"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          git push origin :refs/tags/latest || true
+          gh release create latest SealLife.ipa \
+            --target "$GITHUB_SHA" \
+            --title "Sælliv (seneste build)" \
+            --notes "Automatisk build af commit $GITHUB_SHA. Hent SealLife.ipa og installér med AltStore eller SideStore."

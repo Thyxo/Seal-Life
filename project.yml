@@ -1,0 +1,92 @@
+name: SealLife
+options:
+  bundleIdPrefix: com.thyxo
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    SWIFT_STRICT_CONCURRENCY: minimal
+
+targets:
+  SealLife:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: Shared
+      - path: Assets/Incoming
+        buildPhase: resources
+        excludes:
+          - "**/.gitkeep"
+          - "**/*.md"
+    dependencies:
+      - target: SealLifeWidget
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Sælliv
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: da
+        UILaunchScreen:
+          UIColorName: ""
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSSupportsLiveActivities: true
+        ITSAppUsesNonExemptEncryption: false
+        ALTAppGroups:
+          - group.com.thyxo.seallife
+        SealAppGroup: group.com.thyxo.seallife
+    entitlements:
+      path: App/SealLife.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.thyxo.seallife
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.thyxo.seallife
+        PRODUCT_NAME: SealLife
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+  SealLifeWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widget
+      - path: Shared
+      - path: Assets/Incoming
+        buildPhase: resources
+        excludes:
+          - "**/.gitkeep"
+          - "**/*.md"
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Sælliv
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        ALTAppGroups:
+          - group.com.thyxo.seallife
+        SealAppGroup: group.com.thyxo.seallife
+    entitlements:
+      path: Widget/SealLifeWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.thyxo.seallife
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.thyxo.seallife.widget
+        PRODUCT_NAME: SealLifeWidget
+        SKIP_INSTALL: YES

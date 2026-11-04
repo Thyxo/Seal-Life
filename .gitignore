@@ -1,0 +1,11 @@
+*.xcodeproj/
+build/
+DerivedData/
+Payload/
+*.ipa
+build.log
+.DS_Store
+App/Info.plist
+Widget/Info.plist
+App/SealLife.entitlements
+Widget/SealLifeWidget.entitlements
