@@ -16,7 +16,7 @@ jobs:
   build:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Vis Xcode-version
         run: xcodebuild -version
@@ -63,6 +63,11 @@ jobs:
           ldid -e "$APP/SealLife"
           echo "--- widget entitlements ---"
           ldid -e "$APPEX/SealLifeWidget"
+          if ldid -e "$APP/SealLife" | grep -q application-groups && ldid -e "$APPEX/SealLifeWidget" | grep -q application-groups; then
+            echo "::notice::App Group-entitlements er med i både app og widget"
+          else
+            echo "::warning::App Group-entitlements mangler"
+          fi
 
       - name: Pak .ipa
         run: |
@@ -73,7 +78,7 @@ jobs:
           ls -la SealLife.ipa
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: SealLife-ipa
           path: SealLife.ipa
