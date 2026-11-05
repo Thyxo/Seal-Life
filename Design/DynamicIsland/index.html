@@ -12,7 +12,9 @@
   --f-body:"Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   /* Island-farver (ens i lyst/mørkt tema, fordi Dynamic Island altid er sort) */
-  --i-ocean:#6CC4F5; --i-mint:#6FE0B0; --i-lav:#B9B0FF; --i-sun:#FFC94D; --i-rose:#FF8A8A; --i-grey:rgba(235,240,245,.62);
+  --i-ocean:#6CC4F5; --i-mint:#6FE0B0; --i-lav:#B9B0FF; --i-sun:#FFC94D; --i-rose:#FF8A8A; --i-grey:rgba(235,242,248,.74);
+  --tx:#FFFFFF; --tx2:rgba(235,242,248,.74); --track:rgba(255,255,255,.17); --chip:rgba(255,255,255,.11); --dim:rgba(255,255,255,.62);
+  --seaA:rgba(108,196,245,.18); --seaB:rgba(108,196,245,.38); --wave1:rgba(150,212,248,.38); --wave2:rgba(186,230,252,.60); --foam:rgba(220,242,255,.55);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0C1318; --surface:#141D24; --surface-2:#18232B; --fg:#E4ECF1; --muted:#93A4B0; --line:#26343E;
@@ -106,7 +108,7 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
 
 .sb{position:absolute;top:0;left:0;right:0;height:54px;z-index:3;transition:opacity .25s;pointer-events:none}
 .sb .t{position:absolute;left:0;width:118px;top:17px;text-align:center;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:600;font-size:17px;letter-spacing:-.01em}
-.sb .r{position:absolute;right:17px;top:20px;display:flex;gap:4px;align-items:center}
+.sb .r{position:absolute;right:13px;top:20px;display:flex;gap:4px;align-items:center}
 .screen.hide-sb .sb{opacity:0}
 .screen.lock .sb .t{opacity:0}
 
@@ -123,7 +125,12 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
 .lockui .date{position:absolute;top:66px;width:100%;text-align:center;font-weight:700;font-size:20px;opacity:.9}
 .lockui .clock{position:absolute;top:84px;width:100%;text-align:center;font-weight:800;font-size:100px;letter-spacing:-.02em;line-height:1.1}
 .lockui .lockbtn{position:absolute;bottom:46px;width:50px;height:50px;border-radius:50%;background:rgba(30,30,40,.45);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:grid;place-items:center}
-.lockbanner{position:absolute;left:11px;right:11px;bottom:118px;border-radius:24px;background:linear-gradient(160deg,#10314a,#0b2335);box-shadow:0 8px 30px rgba(0,0,0,.35);overflow:hidden;cursor:pointer;transition:transform .2s}
+.lockbanner{position:absolute;left:11px;right:11px;bottom:118px;border-radius:24px;background:linear-gradient(170deg,#EAF5FB,#CFE8F6);box-shadow:0 8px 30px rgba(0,0,0,.30);overflow:hidden;cursor:pointer;transition:transform .2s;
+  --tx:#1E3A4E; --tx2:#4D6779; --track:rgba(30,58,78,.14); --chip:rgba(30,58,78,.08); --dim:rgba(30,58,78,.45);
+  --seaA:rgba(255,255,255,.45); --seaB:rgba(255,255,255,.75); --wave1:rgba(94,156,199,.22); --wave2:rgba(94,156,199,.38); --foam:rgba(255,255,255,.9);
+  --i-ocean:#2F86C0; --i-sun:#C08400}
+.lockbanner .hc{color:var(--tx)!important}
+.lockbanner .hbtn.done span.l{color:var(--tx)}
 .lockbanner:active{transform:scale(.98)}
 
 /* ---------- Dynamic Island ---------- */
@@ -144,10 +151,17 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
 .ic.in{animation:icin .38s .08s both cubic-bezier(.2,.9,.3,1)}
 @keyframes icin{from{opacity:0;transform:scale(.92);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
 .cl,.cr{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center}
-.cl{left:0;padding-left:6px}.cr{right:0;padding-right:6px}
+.cl{left:0;justify-content:flex-start}.cr{right:0;justify-content:flex-end;padding-right:11px}
 
-.exp{position:absolute;inset:0;padding:6px 18px 16px;display:grid;grid-template-columns:minmax(0,1fr) 126px minmax(0,1fr);grid-template-rows:42px auto 1fr;column-gap:6px;row-gap:6px}
-.lock .exp,.lockbanner .exp{position:relative;padding:14px;grid-template-columns:minmax(0,1fr) 0 minmax(0,1fr);column-gap:0;grid-template-rows:auto auto auto;row-gap:10px}
+.exp{position:absolute;inset:0;padding:14px 24px 10px;display:grid;grid-template-columns:minmax(0,1fr) 126px minmax(0,1fr);grid-template-rows:38px auto 1fr;column-gap:6px;row-gap:4px}
+.lockbanner .exp{position:relative;padding:14px;grid-template-columns:minmax(0,1fr) 0 minmax(0,1fr);column-gap:0;grid-template-rows:auto auto auto;row-gap:8px}
+/* Hav-panel: indsat beholder, koncentrisk med øens hjørner (44 pt radius − 10 pt margin = 34 pt) */
+.sea{position:relative;width:calc(100% + 28px);margin:0 -14px;border-radius:18px 18px 34px 34px;overflow:hidden;
+  background:linear-gradient(180deg,var(--seaA),var(--seaB));padding:9px 14px 16px}
+.sea>.waves{position:absolute;left:0;right:0;bottom:0;width:100%;height:17px;pointer-events:none}
+.sea>.waves .w1{fill:var(--wave1)}.sea>.waves .w2{fill:var(--wave2)}.sea>.waves .fo{fill:none;stroke:var(--foam);stroke-width:1.2}
+.sea>.cnt{position:relative}
+.lockbanner .sea{width:100%;margin:0;border-radius:14px}
 .rg{display:flex;align-items:center;min-width:0;position:relative}
 .rg.end{justify-content:flex-end;text-align:right}
 .rg.bottom{align-self:end}
@@ -162,11 +176,11 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
 .zones .lim28{display:block}
 
 /* tekst i island */
-.it{font-family:var(--f-display);color:#fff;line-height:1.1}
+.it{font-family:var(--f-display);color:var(--tx);line-height:1.1}
 .it .big{font-weight:900;font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .it .mid{font-weight:800;font-size:15px}
-.it .sm{font-weight:700;font-size:11px;color:var(--i-grey)}
-.it .eb{font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--i-grey)}
+.it .sm{font-weight:700;font-size:11px;color:var(--tx2)}
+.it .eb{font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2)}
 .num{display:inline-block;font-variant-numeric:tabular-nums}
 .num.roll{animation:roll .45s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes roll{from{transform:translateY(.6em);opacity:0;filter:blur(3px)}to{transform:none;opacity:1;filter:none}}
@@ -182,15 +196,15 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
 
 /* V1 ringe-knapper */
 .rings{display:flex;justify-content:space-between;width:100%}
-.hbtn{background:none;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:#fff;font-family:var(--f-display);border-radius:14px;transition:transform .15s,opacity .15s}
+.hbtn{background:none;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--tx);font-family:var(--f-display);border-radius:14px;transition:transform .15s,opacity .15s}
 .hbtn:active,.hbtn.pressed{transform:scale(.86);opacity:.75}
-.hbtn span.l{font-weight:800;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--i-grey)}
+.hbtn span.l{font-weight:800;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx2)}
 .hbtn.done span.l{color:var(--c)}
 
 /* V2 segmenter */
-.segbar{display:flex;gap:4px;width:100%;height:44px}
-.sg{flex:1 1 0;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.08);min-width:0;border:0;padding:0;color:#fff}
-.sg:first-child{border-radius:22px 8px 8px 22px}.sg:last-child{border-radius:8px 22px 22px 8px}
+.segbar{display:flex;gap:4px;width:100%;height:38px}
+.sg{flex:1 1 0;border-radius:8px;display:grid;place-items:center;background:var(--chip);min-width:0;border:0;padding:0;color:var(--tx)}
+.sg:first-child{border-radius:20px 8px 8px 20px}.sg:last-child{border-radius:8px 20px 20px 8px}
 .sg.done{background:color-mix(in srgb,var(--c) 30%,transparent)}
 .sg.next{flex-grow:2.8;background:var(--c);color:#0b0b0b;cursor:pointer;font-family:var(--f-display);font-weight:900;font-size:14px;gap:6px;display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s}
 .sg.next:active,.sg.next.pressed{transform:scale(.95);filter:brightness(.8)}
@@ -203,18 +217,18 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
 .minibars i.next{background:rgba(255,255,255,.55)}
 
 /* V3 rejsen */
-.track{position:relative;width:100%;height:58px}
-.track .line{position:absolute;left:14px;right:14px;top:34px;border-top:2px dotted rgba(255,255,255,.22)}
-.track .lit{position:absolute;left:14px;top:33px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--i-ocean),var(--i-sun));width:calc(var(--p) * (100% - 28px))}
-.bead{position:absolute;top:35px;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:rgba(255,255,255,.16);left:calc(14px + var(--i) * (100% - 28px))}
+.track{position:relative;width:100%;height:52px}
+.track .line{position:absolute;left:14px;right:14px;top:30px;border-top:2px dotted var(--track)}
+.track .lit{position:absolute;left:14px;top:29px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--i-ocean),var(--i-sun));width:calc(var(--p) * (100% - 28px))}
+.bead{position:absolute;top:31px;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--track);left:calc(14px + var(--i) * (100% - 28px))}
 .bead.on{background:var(--i-sun);box-shadow:0 0 10px rgba(255,201,77,.7)}
-.bead.end{width:22px;height:22px;margin:-11px 0 0 -11px;display:grid;place-items:center;background:rgba(255,255,255,.12)}
+.bead.end{width:22px;height:22px;margin:-11px 0 0 -11px;display:grid;place-items:center;background:var(--chip)}
 .bead.end.on{background:var(--i-sun)}
 .bead.home{background:rgba(108,196,245,.25);width:18px;height:18px;margin:-9px 0 0 -9px;display:grid;place-items:center}
-.swimmer{position:absolute;top:2px;width:28px;height:28px;left:calc(var(--p) * (100% - 28px))}
+.swimmer{position:absolute;top:-2px;width:28px;height:28px;left:calc(var(--p) * (100% - 28px))}
 .swimmer.hop>svg{animation:hop .7s cubic-bezier(.3,.7,.4,1)}
 @keyframes hop{0%{transform:none}40%{transform:translateY(-12px) rotate(-8deg)}100%{transform:none}}
-.tlabels{position:absolute;left:0;right:0;bottom:-2px;display:flex;justify-content:space-between;font-weight:800;font-size:10px;color:var(--i-grey);letter-spacing:.04em}
+.tlabels{position:absolute;left:0;right:0;bottom:-3px;display:flex;justify-content:space-between;font-weight:800;font-size:10px;color:var(--tx2);letter-spacing:.04em}
 
 /* App-overlay (åbnet via deeplink) */
 .appov{position:absolute;inset:0;z-index:8;background:linear-gradient(180deg,#D3EBF7,#EAF0F4);color:#3E4C59;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center}
@@ -333,8 +347,11 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
           <li><span class="y">✓</span><span>Compact holder sig under 52,33 × 36,67 pt pr. side, og venstre og højre side læses som én oplysning.</span></li>
           <li><span class="y">✓</span><span>Minimal viser fremskridt og ikke kun et logo, ligesom Apples Timer gør.</span></li>
           <li><span class="y">✓</span><span>Smal bredde: hver variant har en udgave, der passer i en cirkel på 28 pt (iPhone på langs).</span></li>
-          <li><span class="y">✓</span><span>Expanded er 371 pt bred og 128–160 pt høj (Apples interval er 84–160).</span></li>
+          <li><span class="y">✓</span><span>Expanded er 371 pt bred og 148–154 pt høj (Apples interval er 84–160).</span></li>
           <li><span class="y">✓</span><span>Animationer varer højst 2 sek. og spiller kun ved en opdatering. Der er ingen løbende animation, for det understøtter Live Activities ikke.</span></li>
+          <li><span class="y">✓</span><span>Koncentriske marginer: runde elementer i compact sidder 5 pt fra kanten (37,33 − 27) ÷ 2, så de følger øens radius. Expanded har 14 pt top og 24 pt sider, og havpanelet sidder 10 pt inde med radius 44 − 10 = 34 pt.</span></li>
+          <li><span class="y">✓</span><span>Intet indhold går helt ud til kanten. Bølgerne ligger i et indsat panel, som Apple anbefaler til at adskille indhold.</span></li>
+          <li><span class="y">✓</span><span>Låseskærmen har lys baggrund og standardmargin på 14 pt.</span></li>
           <li><span class="y">✓</span><span>Tekst i vægt medium eller tungere, og de vigtigste tal er store.</span></li>
           <li><span class="y">✓</span><span>Et tryk åbner det rigtige sted i appen (deeplink). Venstre og højre side fører samme sted hen.</span></li>
           <li><span class="y">✓</span><span>Alert kun når alt er klaret. Almindelige opdateringer lyser ikke skærmen op.</span></li>
@@ -360,7 +377,7 @@ const HABITS0 = [
   {id:'ryd',  name:'Ryd op på værelset',short:'Ryd op',icon:'sparkle', color:'#FFC94D'},
   {id:'stræk',name:'Stræk ud',         short:'Stræk', icon:'leaf',    color:'#FF8A8A'},
 ];
-const OCEAN = '#6CC4F5', SUN = '#FFC94D';
+const OCEAN = 'var(--i-ocean)', SUN = 'var(--i-sun)';
 const state = {
   v:1, pres:'compact', prevPres:'compact', zones:false, lim:false,
   habits: HABITS0.map((h,i)=>({...h, done:i<2})),
@@ -379,8 +396,9 @@ const ICON = {
   fish:'<path d="M2 12c3.2-4.2 8.6-5.3 12.8-2L20 6.5v11L14.8 14C10.6 17.3 5.2 16.2 2 12z"/>',
   home:'<path d="M12 3l9 8h-2.5v9h-5v-6h-3v6h-5v-9H3z"/>',
 };
-const icon = (n,s,c) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${c}" aria-hidden="true">${ICON[n]}</svg>`;
-const check = (s,c) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const icon = (n,s,c) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="fill:${c}" aria-hidden="true">${ICON[n]}</svg>`;
+const check = (s,c) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" style="stroke:${c}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const WAVES = `<svg class="waves" viewBox="0 0 340 30" preserveAspectRatio="none" aria-hidden="true"><path class="w1" d="M0 14C28 6 56 6 85 13S142 21 170 13S227 5 255 12S312 20 340 12V30H0Z"/><path class="w2" d="M0 20C30 14 58 15 85 20S140 26 170 20S228 14 255 19S312 25 340 19V30H0Z"/><path class="fo" d="M0 14C28 6 56 6 85 13S142 21 170 13S227 5 255 12S312 20 340 12"/></svg>`;
 function seal(s, mood='content'){
   const eyes = mood==='happy'
     ? '<path d="M10.8 18.6q2.7-3.2 5.4 0M23.8 18.6q2.7-3.2 5.4 0" stroke="#2A2F38" stroke-width="1.9" fill="none" stroke-linecap="round"/>'
@@ -403,9 +421,9 @@ function pv(key, to){ if(STATIC) return to; const f = prevP.has(key) ? prevP.get
 function changed(key, val){ if(STATIC) return false; const c = prevN.has(key) && prevN.get(key)!==val; nextN.set(key,val); return c; }
 function num(key, val){ return `<span class="num${changed(key,String(val))?' roll':''}">${val}</span>`; }
 let uid=0;
-function ring({size,stroke,color,p,key,inner='',track='rgba(255,255,255,.14)'}){
+function ring({size,stroke,color,p,key,inner='',track='var(--track)'}){
   const r=(size-stroke)/2, C=2*Math.PI*r, c=size/2, from=pv(key,p);
-  return `<span class="ring" style="width:${size}px;height:${size}px"><svg class="ap" data-to="${p}" style="--p:${from};--C:${C.toFixed(2)}px" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${track}" stroke-width="${stroke}"/><circle class="rf" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${C.toFixed(2)}" transform="rotate(-90 ${c} ${c})"/></svg><span class="ri">${inner}</span></span>`;
+  return `<span class="ring" style="width:${size}px;height:${size}px"><svg class="ap" data-to="${p}" style="--p:${from};--C:${C.toFixed(2)}px" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:${track}" stroke-width="${stroke}"/><circle class="rf" cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${C.toFixed(2)}" transform="rotate(-90 ${c} ${c})"/></svg><span class="ri">${inner}</span></span>`;
 }
 function water(size, p, key, mood){
   const id='w'+(uid++), from=pv(key,p);
@@ -427,21 +445,20 @@ function ctx(){
 
 /* ================= Varianter ================= */
 const V = {
- 1:{ name:'Ringe', side:46,
-   expH:c=> c.all ? 160 : 140,
+ 1:{ name:'Ringe', side:42,
+   expH:()=>150,
    cl:c=> ring({size:27,stroke:3.4,color:OCEAN,p:c.done/c.total,key:'r-main',inner:seal(18,c.mood)}),
    ct:c=> `<span class="it"><span class="mid" style="color:${OCEAN};font-size:16px;font-weight:900">${num('n-done',c.done)}/${c.total}</span></span>`,
    min:c=> ring({size:27,stroke:3.4,color:OCEAN,p:c.done/c.total,key:'r-main',inner:seal(18,c.mood)}),
    lim:c=> ring({size:26,stroke:3.2,color:OCEAN,p:c.done/c.total,key:'r-main',inner:seal(17,c.mood)}),
    exp:(c,o)=>({
      leading:{a:'1/1/2/2', h:`<div class="it" style="display:flex;gap:6px;align-items:center">${icon('flame',18,SUN)}<div><div class="mid" style="color:${SUN}">${num('n-streak',state.streak+(c.all?1:0))} dage</div><div class="sm">i træk</div></div></div>`},
-     trailing:{a:'1/3/2/4', end:1, h:`<div class="it"><div class="big" style="color:${OCEAN}">${num('n-done',c.done)}/${c.total}</div><div class="sm">vaner i dag</div></div>`},
-     center: c.all ? {a:'2/1/3/4', h:`<div class="it" style="width:100%;text-align:center"><span class="mid" style="color:${SUN}">Alt klaret · +5 ${icon('fish',13,SUN)}</span></div>`} : null,
-     bottom:{a:'3/1/4/4', h:`<div class="rings">${c.hs.map(h=>`<button class="hbtn${h.done?' done':''}" style="--c:${h.color}" data-act="toggle" data-id="${h.id}" aria-pressed="${h.done}" aria-label="${h.name}: ${h.done?'klaret, tryk for at fortryde':'tryk for at afkrydse'}">${ring({size:46,stroke:5,color:h.color,p:h.done?1:0,key:'h-'+h.id,inner:h.done?check(18,h.color):icon(h.icon,18,'rgba(255,255,255,.55)')})}<span class="l">${h.done?'Klaret':h.short}</span></button>`).join('')}</div>`},
+     trailing:{a:'1/3/2/4', end:1, h:`<div class="it"><div class="big" style="color:${OCEAN}">${num('n-done',c.done)}/${c.total}</div><div class="sm">${c.all?`Alt klaret · +5 ${icon('fish',11,SUN)}`:'vaner i dag'}</div></div>`},
+     bottom:{a:'3/1/4/4', h:`<div class="rings">${c.hs.map(h=>`<button class="hbtn${h.done?' done':''}" style="--c:${h.color}" data-act="toggle" data-id="${h.id}" aria-pressed="${h.done}" aria-label="${h.name}: ${h.done?'klaret, tryk for at fortryde':'tryk for at afkrydse'}">${ring({size:40,stroke:4.5,color:h.color,p:h.done?1:0,key:'h-'+h.id,inner:h.done?check(16,h.color):icon(h.icon,16,'var(--dim)')})}<span class="l">${h.done?'Klaret':h.short}</span></button>`).join('')}</div>`},
    }),
  },
- 2:{ name:'Næste vane', side:48,
-   expH:()=>160,
+ 2:{ name:'Næste vane', side:46,
+   expH:()=>154,
    cl:c=> c.next ? `<span class="${changed('c2-next',c.next.id)?'swap':''}" style="width:26px;height:26px;border-radius:50%;background:${c.next.color};display:grid;place-items:center">${icon(c.next.icon,15,'#0b0b0b')}</span>` : seal(24,'happy'),
    ct:c=> `<span class="minibars">${c.hs.map((h,i)=>`<i class="${h.done?'':(c.next&&h.id===c.next.id?'next':'')}${h.done&&changed('mb-'+h.id,'1')?' pop':''}" style="${h.done?'background:'+h.color:''}"></i>`).join('')}</span>`,
    min:c=> ring({size:27,stroke:2.6,color:c.next?c.next.color:OCEAN,p:c.done/c.total,key:'r2-min',inner: c.next ? `<span style="width:17px;height:17px;border-radius:50%;background:${c.next.color};display:grid;place-items:center">${icon(c.next.icon,10,'#0b0b0b')}</span>` : seal(18,'happy')}),
@@ -450,35 +467,35 @@ const V = {
      const nk = c.next ? c.next.id : 'none'; const sw = changed('e2-next',nk);
      const prevNext = sw ? (prevN.get('e2-next')) : null;
      return {
-     leading:{a:'1/1/2/2', h:`<div style="display:flex;align-items:center;gap:8px">${seal(40,c.mood)}</div>`},
-     trailing:{a:'1/3/2/4', end:1, h:`<div class="it"><div class="big" style="color:${c.next?c.next.color:OCEAN}">${num('n-rem',c.remaining)}</div><div class="sm">${c.remaining===1?'vane':'vaner'} tilbage</div></div>`},
+     leading:{a:'1/1/2/2', h:`<div style="display:flex;align-items:center;gap:8px">${seal(36,c.mood)}</div>`},
+     trailing:{a:'1/3/2/4', end:1, h:`<div class="it"><div class="big hc" style="color:${c.next?c.next.color:OCEAN}">${num('n-rem',c.remaining)}</div><div class="sm">${c.remaining===1?'vane':'vaner'} tilbage</div></div>`},
      center:{a:'2/1/3/4', h: c.next
-        ? `<div class="it ${sw?'swap':''}"><div class="eb">Næste vane</div><div class="mid" style="font-size:19px;margin-top:3px">${c.next.name}</div></div>`
-        : `<div class="it swap"><div class="eb">Alt klaret i dag</div><div class="mid" style="font-size:19px;margin-top:3px">${state.seal} er hjemme igen 💙</div></div>`},
+        ? `<div class="it ${sw?'swap':''}" style="display:flex;align-items:baseline;gap:7px;white-space:nowrap"><span class="eb">Næste</span><span class="mid" style="font-size:18px">${c.next.name}</span></div>`
+        : `<div class="it swap" style="display:flex;align-items:baseline;gap:7px;white-space:nowrap"><span class="eb">Alt klaret</span><span class="mid" style="font-size:18px">${state.seal} er hjemme 💙</span></div>`},
      bottom:{a:'3/1/4/4', h:`<div class="segbar">${c.hs.map(h=>{
         const isNext = c.next && h.id===c.next.id;
         if(isNext) return `<button class="sg next${sw?' grow':''}" style="--c:${h.color}" data-act="next" data-id="${h.id}" aria-label="Markér ${h.name} som klaret">${check(17,'#0b0b0b')}<span>${h.short} klaret</span></button>`;
         if(h.done) return `<span class="sg done${sw&&prevNext===h.id?' shrink':''}" style="--c:${h.color}">${check(16,h.color)}</span>`;
-        return `<span class="sg">${icon(h.icon,16,'rgba(255,255,255,.4)')}</span>`;
+        return `<span class="sg">${icon(h.icon,16,'var(--dim)')}</span>`;
       }).join('')}</div>`},
    };},
  },
- 3:{ name:'Rejsen', side:48,
-   expH:()=>128,
+ 3:{ name:'Rejsen', side:50,
+   expH:()=>148,
    cl:c=> water(27,c.done/c.total,'w-main',c.mood),
-   ct:c=> `<span class="it" style="display:flex;gap:3px;align-items:center">${icon('sail',13,OCEAN)}<span class="mid" style="color:${OCEAN};font-weight:900">${num('n-done',c.done)}/${c.total}</span></span>`,
+   ct:c=> `<span class="it" style="display:flex;gap:2px;align-items:center">${icon('sail',11,OCEAN)}<span class="mid" style="color:${OCEAN};font-weight:900">${num('n-done',c.done)}/${c.total}</span></span>`,
    min:c=> water(27,c.done/c.total,'w-main',c.mood),
    lim:c=> water(26,c.done/c.total,'w-main',c.mood),
    exp:(c,o)=>{
      const p = c.done/c.total, from = pv('track',p), hop = changed('hop',String(c.done));
      return {
-     leading:{a:'1/1/2/2', h:`<div style="display:flex;align-items:center;gap:8px">${water(34,p,'w-main',c.mood)}<div class="it"><div class="mid">${state.seal}</div><div class="sm">${c.all?'Glad':'Tilfreds'}</div></div></div>`},
+     leading:{a:'1/1/2/2', h:`<div style="display:flex;align-items:center;gap:8px">${water(36,p,'w-main',c.mood)}<div class="it"><div class="mid">${state.seal}</div><div class="sm">${c.all?'Glad':'Tilfreds'}</div></div></div>`},
      trailing:{a:'1/3/2/4', end:1, h:`<div class="it"><div class="mid" style="display:flex;gap:4px;align-items:center;justify-content:flex-end">${icon('sail',14,SUN)}${c.all?'Fremme!':state.place}</div><div class="sm">${c.all?'ved '+state.place:num('n-rem',c.remaining)+' vaner væk'}</div></div>`},
      bottom:{a:'3/1/4/4', h:`<div class="track ap" data-to="${p}" style="--p:${from}">
         <div class="line"></div><div class="lit"></div>
         <span class="bead home" style="--i:0">${icon('home',11,OCEAN)}</span>
         ${c.hs.map((h,i)=>{const on=h.done&&i<c.done; const last=i===c.hs.length-1; const pop = (i+1===c.done) && hop;
-            return `<span class="bead${on?' on':''}${last?' end':''}${pop?' pop':''}" style="--i:${(i+1)/c.hs.length}">${last?icon('sail',13,on?'#0b0b0b':'rgba(255,255,255,.55)'):''}</span>`;}).join('')}
+            return `<span class="bead${on?' on':''}${last?' end':''}${pop?' pop':''}" style="--i:${(i+1)/c.hs.length}">${last?icon('sail',13,on?'#0b0b0b':'var(--dim)'):''}</span>`;}).join('')}
         <span class="swimmer${hop?' hop':''}">${seal(28,c.mood)}</span>
         <div class="tlabels"><span>HJEM</span><span>${state.place.toUpperCase()}</span></div>
       </div>`},
@@ -503,14 +520,15 @@ const island=$('#island'), ic=$('#ic'), screen=$('#screen'), det=$('#detached'),
 
 function regionsHTML(r){
   return ['leading','trailing','center','bottom'].filter(k=>r[k]).map(k=>{
-    const x=r[k]; return `<div class="rg${x.end?' end':''}${k==='bottom'?' bottom':''}" data-r="${k}" style="grid-area:${x.a}">${x.h}</div>`;
+    const x=r[k]; const body = k==='bottom' ? `<div class="sea">${WAVES}<div class="cnt">${x.h}</div></div>` : x.h;
+    return `<div class="rg${x.end?' end':''}${k==='bottom'?' bottom':''}" data-r="${k}" style="grid-area:${x.a}">${body}</div>`;
   }).join('');
 }
 function islandInner(mode, c){
   const v = V[state.v];
-  if(mode==='compact') return `<div class="cl" data-r="leading" style="width:${v.side}px">${v.cl(c)}</div><div class="cr" data-r="trailing" style="width:${v.side}px">${v.ct(c)}</div>`;
-  if(mode==='minimal') return `<div class="cl" style="width:40px;padding-left:6px">${v.min(c)}</div>`;
-  if(mode==='lim') return `<div class="cl" style="width:40px;padding-left:6px">${v.lim(c)}</div>`;
+  if(mode==='compact') return `<div class="cl" data-r="leading" style="width:${v.side}px;padding-left:5px">${v.cl(c)}</div><div class="cr" data-r="trailing" style="width:${v.side}px">${v.ct(c)}</div>`;
+  if(mode==='minimal') return `<div class="cl" style="width:40px;padding-left:5px">${v.min(c)}</div>`;
+  if(mode==='lim') return `<div class="cl" style="width:40px;padding-left:5.5px">${v.lim(c)}</div>`;
   if(mode==='expanded') return `<div class="exp">${regionsHTML(v.exp(c))}</div>`;
   return '';
 }
@@ -536,7 +554,7 @@ function render(opts={}){
   const camL = (CX-CAM/2) - g.l;
   Object.assign(camzone.style,{left:camL+'px',width:CAM+'px'});
   lim28.style.display = (state.zones && (g.mode==='lim'||g.mode==='minimal')) ? 'block' : 'none';
-  Object.assign(lim28.style,{left:'8px',top:(H-28)/2+'px'});
+  Object.assign(lim28.style,{left:'5.5px',top:(H-28)/2+'px'});
   // fritstående (anden app) i minimal
   det.classList.toggle('off', !(g.mode==='minimal'));
   Object.assign(det.style,{left:(CX+CAM/2+6)+'px',width:'45px'});
@@ -577,7 +595,7 @@ function setPres(p, why){
   if(state.ended && p!=='lock'){ state.ended=false; }
   state.prevPres = state.pres==='expanded' ? state.prevPres : state.pres;
   state.pres = p; render();
-  const cap = {minimal:'Minimal: der kører flere Live Activities (her også et æggeur)', compact:'Compact: én aktiv Live Activity', expanded:'Expanded: vises, når man holder fingeren på øen', lock:'Låseskærm: samme layout som expanded med marginer på 14 pt'};
+  const cap = {minimal:'Minimal: der kører flere Live Activities (her også et æggeur)', compact:'Compact: én aktiv Live Activity', expanded:'Expanded: vises, når man holder fingeren på øen', lock:'Låseskærm: lys baggrund, samme layout som expanded og marginer på 14 pt'};
   caption(why || cap[p]);
 }
 function toggleHabit(id, src){
@@ -695,8 +713,8 @@ $('#aDemo').addEventListener('click',()=>{ if($('#aDemo').textContent.startsWith
 /* ================= Noter pr. variant ================= */
 const NOTES = {
  1:{title:'1 · Ringe', idea:'Hver vane har sin egen ring, ligesom aktivitetsringene på et ur. Streaken står øverst. Inspireret af kortet med “27 day streak”.',
-   rows:[['Minimal','Ring om sælens hoved, der fyldes efterhånden som vanerne klares.'],['Compact','Venstre: ringen med sælen. Højre: “2/5” i samme blå farve, så de to sider læses som én oplysning.'],['Expanded','Streak og antal øverst. Nederst fem ringe på 46 pt, en for hver vane.'],['Knapper','Hver ring er en <code>Button(intent: ToggleHabitIntent(habitID:))</code>. Tryk afkrydser, og et nyt tryk fortryder. Appen åbner ikke.'],['Animationer','Ringen fyldes på 0,9 sek., og tallet ruller op med <code>.contentTransition(.numericText())</code>.']],
-   checks:[['w','Fem knapper. Apple foretrækker ét interaktivt element, fordi flere giver risiko for fejltryk. Hver ring er dog 46 pt (minimum 44).'],['y','Fortryd-tryk virker, fordi intenten allerede kan begge dele.']],
+   rows:[['Minimal','Ring om sælens hoved, der fyldes efterhånden som vanerne klares.'],['Compact','Venstre: ringen med sælen. Højre: “2/5” i samme blå farve, så de to sider læses som én oplysning.'],['Expanded','Streak og antal øverst. Nederst et lyst havpanel med bølger og fem ringe, en for hver vane.'],['Knapper','Hver ring er en <code>Button(intent: ToggleHabitIntent(habitID:))</code>. Tryk afkrydser, og et nyt tryk fortryder. Appen åbner ikke.'],['Animationer','Ringen fyldes på 0,9 sek., og tallet ruller op med <code>.contentTransition(.numericText())</code>.']],
+   checks:[['w','Fem knapper. Apple foretrækker ét interaktivt element, fordi flere giver risiko for fejltryk. Hver ring er 40 pt, og med etiketten under bliver trykfladen ca. 54 pt høj (minimum 44).'],['y','Fortryd-tryk virker, fordi intenten allerede kan begge dele.']],
    code:`DynamicIslandExpandedRegion(.bottom) {
   HStack {
     ForEach(context.state.habits) { h in
@@ -772,7 +790,7 @@ function boardHTML(){
     out.push(`<div class="brow">
       <div class="bname"><h3>${NOTES[v].title}</h3><span>${v===1?'5 knapper':v===2?'1 knap':'Ingen knapper'}</span></div>
       <div class="bcell"><div style="position:relative;width:45px;height:${H}px;border-radius:${R}px;background:#000;display:grid;place-items:center">${VV.min(c)}</div><small>Minimal</small></div>
-      <div class="bcell"><div style="position:relative;width:${compW}px;height:${H}px;border-radius:${R}px;background:#000">${camGap}<div class="cl" style="width:${VV.side}px">${VV.cl(c)}</div><div class="cr" style="width:${VV.side}px">${VV.ct(c)}</div></div><small>Compact</small></div>
+      <div class="bcell"><div style="position:relative;width:${compW}px;height:${H}px;border-radius:${R}px;background:#000">${camGap}<div class="cl" style="width:${VV.side}px;padding-left:5px">${VV.cl(c)}</div><div class="cr" style="width:${VV.side}px">${VV.ct(c)}</div></div><small>Compact</small></div>
       <div class="bcell bexp"><div class="bscale" data-w="371" style="width:100%;max-width:371px"><div class="bzoom" style="position:relative;width:371px;height:${h}px;border-radius:44px;background:#000;transform-origin:top left">${camGap.replace(`left:${VV.side}px`,'left:122.5px').replace('top:0;bottom:0','top:0;height:37.33px')}<div class="exp">${regionsHTML(VV.exp(c))}</div></div></div><small>Expanded</small></div>
     </div>`);
   }
