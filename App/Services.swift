@@ -239,6 +239,13 @@ enum BackupError: LocalizedError {
 
 enum BackupManager {
     static func makeFile(store: GameStore) throws -> URL {
+        let data = try encode(store: store)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Saelliv-backup-\(DayKey.key()).json")
+        try data.write(to: url, options: .atomic)
+        return url
+    }
+
+    static func encode(store: GameStore) throws -> Data {
         let p = store.profile
         let profile = BackupFile.ProfileDTO(
             name: p.name, colorRaw: p.colorRaw, mood: p.mood, fish: p.fish, owned: p.owned,
@@ -264,16 +271,17 @@ enum BackupManager {
         let enc = JSONEncoder()
         enc.outputFormatting = [.prettyPrinted, .sortedKeys]
         enc.dateEncodingStrategy = .iso8601
-        let data = try enc.encode(file)
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Saelliv-backup-\(DayKey.key()).json")
-        try data.write(to: url, options: .atomic)
-        return url
+        return try enc.encode(file)
     }
 
     static func restore(from url: URL, store: GameStore) throws {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         let data = try Data(contentsOf: url)
+        try restore(data: data, store: store)
+    }
+
+    static func restore(data: Data, store: GameStore, refresh: Bool = true) throws {
         let dec = JSONDecoder()
         dec.dateDecodingStrategy = .iso8601
         guard let file = try? dec.decode(BackupFile.self, from: data) else { throw BackupError.unreadable }
@@ -325,10 +333,57 @@ enum BackupManager {
         if let fits = file.fits { FitStore.shared.replaceAll(fits) }
 
         try ctx.save()
+        guard refresh else { return }
         store.reloadHabits()
         store.onForeground()
         store.refreshToday()
         store.dataVersion += 1
+    }
+}
+
+// MARK: - Automatisk backup
+
+/// En stille kopi af alle data, som skrives ved hver ændring – både i appens egen mappe
+/// og i App Group-mappen. Forsvinder databasen, hentes sælen tilbage herfra.
+enum AutoBackup {
+    static let fileName = "SealLife-autobackup.json"
+
+    private static var urls: [URL] {
+        var list: [URL] = []
+        let fm = FileManager.default
+        if let support = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            try? fm.createDirectory(at: support, withIntermediateDirectories: true)
+            list.append(support.appendingPathComponent(fileName))
+        }
+        if let docs = fm.urls(for: .documentDirectory, in: .userDomainMask).first {
+            list.append(docs.appendingPathComponent(".\(fileName)"))
+        }
+        let group = AppGroup.containerURL.appendingPathComponent(fileName)
+        if !list.contains(group) { list.append(group) }
+        return list
+    }
+
+    static func write(_ data: Data) {
+        for url in urls {
+            try? data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+        }
+    }
+
+    /// Den nyeste brugbare kopi.
+    static func latest() -> Data? {
+        let dec = JSONDecoder()
+        dec.dateDecodingStrategy = .iso8601
+        var best: (date: Date, data: Data)?
+        for url in urls {
+            guard let data = try? Data(contentsOf: url),
+                  let file = try? dec.decode(BackupFile.self, from: data) else { continue }
+            if best == nil || file.exportedAt > best!.date { best = (file.exportedAt, data) }
+        }
+        return best?.data
+    }
+
+    static func clear() {
+        for url in urls { try? FileManager.default.removeItem(at: url) }
     }
 }
 

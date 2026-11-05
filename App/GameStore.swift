@@ -5,8 +5,11 @@ import WidgetKit
 
 @Observable
 final class GameStore {
-    @ObservationIgnored let container: ModelContainer
-    @ObservationIgnored let context: ModelContext
+    @ObservationIgnored private(set) var container: ModelContainer
+    @ObservationIgnored private(set) var context: ModelContext
+    /// true = databasen på disken kunne ikke åbnes, og vi kører midlertidigt i hukommelsen.
+    /// Så må intet gemmes som backup, og vi prøver igen ved næste åbning.
+    @ObservationIgnored private(set) var isTemporary = false
 
     var profile: SealProfile
     var habits: [Habit] = []
@@ -23,37 +26,91 @@ final class GameStore {
     var debugStateOverride: MoodState?
 
     init() {
-        let schema = Schema([Habit.self, HabitLog.self, MoodEntry.self, SealProfile.self])
-        let url = AppGroup.containerURL.appendingPathComponent("SealLife.store")
-        let config = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)
-        let made: ModelContainer
-        if let c = try? ModelContainer(for: schema, configurations: [config]) {
-            made = c
-        } else {
-            let mem = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-            made = try! ModelContainer(for: schema, configurations: [mem])
-        }
-        let ctx = ModelContext(made)
-        var found: SealProfile
-        if let existing = try? ctx.fetch(FetchDescriptor<SealProfile>()).first {
-            found = existing
-        } else {
-            found = SealProfile()
-            ctx.insert(found)
-            try? ctx.save()
-        }
-        container = made
+        let opened = GameStore.openContainer()
+        let ctx = ModelContext(opened.container)
+        container = opened.container
         context = ctx
-        profile = found
+        isTemporary = opened.temporary
+        profile = GameStore.pickProfile(in: ctx) ?? SealProfile()
+        if profile.modelContext == nil { ctx.insert(profile) }
+        recoverIfNeeded()
         reloadHabits()
         refreshToday()
+    }
+
+    private static var storeURL: URL { AppGroup.containerURL.appendingPathComponent("SealLife.store") }
+
+    private static var schema: Schema { Schema([Habit.self, HabitLog.self, MoodEntry.self, SealProfile.self]) }
+
+    /// Åbner databasen på disken. Lykkes det ikke (fx telefonen er låst efter genstart),
+    /// bruges en midlertidig database i hukommelsen – men det huskes, så vi prøver igen.
+    private static func openContainer() -> (container: ModelContainer, temporary: Bool) {
+        let config = ModelConfiguration(schema: schema, url: storeURL, cloudKitDatabase: .none)
+        for _ in 0..<3 {
+            if let c = try? ModelContainer(for: schema, configurations: [config]) { return (c, false) }
+            Thread.sleep(forTimeInterval: 0.15)
+        }
+        let mem = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        return (try! ModelContainer(for: schema, configurations: [mem]), true)
+    }
+
+    /// Vælger den rigtige profil. Ligger der flere (fx en tom, der blev oprettet ved en fejl),
+    /// foretrækkes den der er gennemført onboarding, og ellers den ældste.
+    private static func pickProfile(in ctx: ModelContext) -> SealProfile? {
+        guard let all = try? ctx.fetch(FetchDescriptor<SealProfile>()), !all.isEmpty else { return nil }
+        let onboarded = all.filter(\.onboarded)
+        if !onboarded.isEmpty {
+            return onboarded.max { ($0.lastBackup ?? $0.createdAt) < ($1.lastBackup ?? $1.createdAt) }
+        }
+        return all.min { $0.createdAt < $1.createdAt }
+    }
+
+    /// Sørger for, at sælen ikke forsvinder:
+    /// 1) kører vi i hukommelsen, prøves databasen på disken igen,
+    /// 2) mangler sælen stadig, hentes den automatiske backup.
+    @discardableResult
+    func recoverIfNeeded() -> Bool {
+        var changed = false
+        if isTemporary {
+            let opened = GameStore.openContainer()
+            if !opened.temporary {
+                let ctx = ModelContext(opened.container)
+                container = opened.container
+                context = ctx
+                isTemporary = false
+                let p = GameStore.pickProfile(in: ctx) ?? SealProfile()
+                if p.modelContext == nil { ctx.insert(p) }
+                profile = p
+                changed = true
+            }
+        }
+        if !isTemporary && !profile.onboarded {
+            // Måske ligger der en anden, rigtig profil i databasen.
+            if let p = GameStore.pickProfile(in: context), p.onboarded {
+                profile = p
+                changed = true
+            } else if let data = AutoBackup.latest() {
+                if (try? BackupManager.restore(data: data, store: self, refresh: false)) != nil {
+                    changed = true
+                }
+            }
+        }
+        if changed {
+            try? context.save()
+            reloadHabits()
+            refreshToday()
+            dataVersion += 1
+        }
+        return changed
     }
 
     // MARK: - Livscyklus
 
     func onForeground() {
+        recoverIfNeeded()
         todayKey = DayKey.key()
         guard profile.onboarded else { return }
+        writeAutoBackup()
         applyPendingToggles()
         processElapsedDays()
         refreshToday()
@@ -66,6 +123,13 @@ final class GameStore {
     func save() {
         try? context.save()
         dataVersion += 1
+        writeAutoBackup()
+    }
+
+    /// Gemmer en automatisk kopi af alt uden for databasen (kun når sælen er ægte og gemt på disken).
+    func writeAutoBackup() {
+        guard profile.onboarded, !isTemporary else { return }
+        if let data = try? BackupManager.encode(store: self) { AutoBackup.write(data) }
     }
 
     func reloadHabits() {
@@ -494,6 +558,7 @@ final class GameStore {
     }
 
     func debugResetOnboarding() {
+        AutoBackup.clear()
         profile.onboarded = false
         save()
     }
