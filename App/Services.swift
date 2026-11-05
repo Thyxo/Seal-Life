@@ -140,10 +140,15 @@ enum LiveActivityManager {
         } else {
             message = "Ved \(store.adventurePlace.name) · \(store.remainingToday) tilbage"
         }
+        let habits = store.todayHabits.map { h in
+            LiveHabit(id: h.id.uuidString, name: h.name, icon: h.icon, target: h.timesPerDay,
+                      done: min(store.todayCounts[h.id] ?? 0, h.timesPerDay))
+        }
         let state = SealActivityAttributes.ContentState(
             mood: store.profile.mood, moodStateRaw: store.moodState.rawValue,
             done: store.todayDone, total: store.todayTotal,
-            place: store.adventurePlace.name, message: message)
+            place: store.adventurePlace.name, message: message, habits: habits)
+        let sealName = store.profile.name
         let shouldShow = enabled && store.profile.onboarded && store.todayTotal > 0 && !store.profile.onVacation
         let allDone = store.allDoneToday
         let today = store.todayKey
@@ -158,11 +163,8 @@ enum LiveActivityManager {
                 a.attributes.dayKey == today && a.activityState == .active
             }
             if let current {
-                if allDone {
-                    await current.end(content, dismissalPolicy: .after(Date().addingTimeInterval(2 * 3600)))
-                } else {
-                    await current.update(content)
-                }
+                // Alt klaret → kort alert og afslut (bliver 30 min på låseskærmen).
+                await LiveActivityContent.apply(state, to: current, sealName: sealName)
             } else if !allDone {
                 _ = try? Activity<SealActivityAttributes>.request(attributes: attrs, content: content, pushType: nil)
             }

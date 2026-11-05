@@ -220,6 +220,18 @@ struct SealWidgetView: View {
 }
 
 // MARK: - Live Activity
+//
+// Design: "Næste vane" (variant 2) med vandcirklen fra "Rejsen" (variant 3) som minimal.
+// Se Design/DynamicIsland/index.html. Mål og regler fra Apples HIG (Live Activities):
+// compact ≤ 52,33 pt pr. side, expanded 371 × 84–160 pt, koncentriske marginer, animationer ≤ 2 s.
+
+/// Farver på sort baggrund i øen – én pr. vane, i rækkefølge.
+enum IslandPalette {
+    static let ocean = Color(hex: 0x6CC4F5)
+    static let sun = Color(hex: 0xFFC94D)
+    static let habits: [Color] = [Color(hex: 0x6FE0B0), ocean, Color(hex: 0xB9B0FF), sun, Color(hex: 0xFF8A8A)]
+    static func color(_ index: Int) -> Color { habits[index % habits.count] }
+}
 
 struct SealLiveActivity: Widget {
     var body: some WidgetConfiguration {
@@ -229,69 +241,285 @@ struct SealLiveActivity: Widget {
                 .activityBackgroundTint(Theme.oceanLight)
                 .activitySystemActionForegroundColor(Theme.oceanDark)
         } dynamicIsland: { context in
-            let st = MoodState(rawValue: context.state.moodStateRaw) ?? .content
+            let s = context.state
             let color = SealColor(rawValue: context.attributes.colorRaw) ?? .gray
+            let mood: MoodState = s.allDone ? .happy : (MoodState(rawValue: s.moodStateRaw) ?? .content)
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    SealFigure(color: color, state: st, animated: false).frame(width: 52, height: 52)
+                    SealFigure(color: color, state: mood, animated: false)
+                        .frame(width: 38, height: 38)
+                        .padding(.leading, 12)
+                        .padding(.top, 2)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text("\(context.state.done)/\(context.state.total)")
-                        .font(.rounded(20, .heavy))
-                        .foregroundStyle(.white)
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text("\(s.remaining)")
+                            .font(.rounded(22, .black))
+                            .foregroundStyle(nextColor(s))
+                            .contentTransition(.numericText(value: Double(s.remaining)))
+                        Text(s.remaining == 1 ? "vane tilbage" : "vaner tilbage")
+                            .font(.rounded(11, .bold))
+                            .foregroundStyle(.white.opacity(0.74))
+                    }
+                    .padding(.trailing, 12)
+                    .padding(.top, 2)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text(context.state.message)
-                        .font(.rounded(14, .semibold))
-                        .foregroundStyle(.white)
+                    VStack(alignment: .leading, spacing: 6) {
+                        NextHabitTitle(state: s, sealName: context.attributes.sealName, dark: true)
+                            .padding(.horizontal, 12)
+                        SeaPanel(dark: true, corners: 34) {
+                            HabitSegmentBar(state: s, dark: true)
+                        }
+                    }
+                    .animation(.spring(duration: 0.6), value: s.done)
                 }
             } compactLeading: {
-                Text("🦭")
+                if let next = s.next, let idx = s.habitList.firstIndex(of: next) {
+                    Text(next.icon)
+                        .font(.system(size: 14))
+                        .frame(width: 26, height: 26)
+                        .background(Circle().fill(IslandPalette.color(idx)))
+                        .id(next.id)
+                        .transition(.push(from: .bottom))
+                } else {
+                    SealFigure(color: color, state: .happy, animated: false).frame(width: 26, height: 26)
+                }
             } compactTrailing: {
-                Text("\(context.state.done)/\(context.state.total)")
-                    .font(.rounded(13, .heavy))
-                    .foregroundStyle(Theme.ocean)
+                MiniBars(state: s)
+                    .padding(.trailing, 4)
             } minimal: {
-                Text("🦭")
+                WaterSeal(color: color, mood: mood, progress: s.progress)
+                    .frame(width: 27, height: 27)
+            }
+            .contentMargins(.leading, 5, for: .compactLeading)
+            .contentMargins(.all, 5, for: .minimal)
+            .contentMargins(.all, 10, for: .expanded)
+            .keylineTint(Theme.ocean)
+        }
+    }
+
+    private func nextColor(_ s: SealActivityAttributes.ContentState) -> Color {
+        guard let n = s.next, let i = s.habitList.firstIndex(of: n) else { return IslandPalette.ocean }
+        return IslandPalette.color(i)
+    }
+}
+
+// MARK: Byggeklodser
+
+/// "NÆSTE  Læs 20 min" – glider op, når næste vane skifter.
+struct NextHabitTitle: View {
+    let state: SealActivityAttributes.ContentState
+    let sealName: String
+    let dark: Bool
+
+    var body: some View {
+        let fg: Color = dark ? .white : Theme.ink
+        let soft: Color = dark ? .white.opacity(0.74) : Theme.inkSoft
+        HStack(alignment: .firstTextBaseline, spacing: 7) {
+            Text(state.next == nil ? "ALT KLARET" : "NÆSTE")
+                .font(.rounded(10, .heavy))
+                .tracking(1.2)
+                .foregroundStyle(soft)
+            Group {
+                if let n = state.next {
+                    Text(n.target > 1 ? "\(n.name) \(n.done)/\(n.target)" : n.name)
+                } else {
+                    Text("\(sealName) er hjemme 💙")
+                }
+            }
+            .font(.rounded(18, .heavy))
+            .foregroundStyle(fg)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .id(state.next?.id ?? "done")
+            .transition(.push(from: .bottom))
+        }
+    }
+}
+
+/// Lyst havpanel med bølger i bunden – en indsat beholder, koncentrisk med øens hjørner.
+struct SeaPanel<Content: View>: View {
+    let dark: Bool
+    let corners: CGFloat
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        let shape = UnevenRoundedRectangle(topLeadingRadius: 18, bottomLeadingRadius: corners,
+                                           bottomTrailingRadius: corners, topTrailingRadius: 18,
+                                           style: .continuous)
+        let base: Color = dark ? IslandPalette.ocean : .white
+        content
+            .padding(.horizontal, 14)
+            .padding(.top, 9)
+            .padding(.bottom, 16)
+            .frame(maxWidth: .infinity)
+            .background(alignment: .bottom) {
+                ZStack(alignment: .bottom) {
+                    LinearGradient(colors: [base.opacity(dark ? 0.18 : 0.45), base.opacity(dark ? 0.38 : 0.75)],
+                                   startPoint: .top, endPoint: .bottom)
+                    WaveShape(level: 0.55, phase: 0)
+                        .fill((dark ? Color(hex: 0x96D4F8) : Theme.oceanDeep).opacity(dark ? 0.38 : 0.22))
+                        .frame(height: 17)
+                    WaveShape(level: 0.35, phase: 0.5)
+                        .fill((dark ? Color(hex: 0xBAE6FC) : Theme.oceanDeep).opacity(dark ? 0.6 : 0.38))
+                        .frame(height: 17)
+                }
+            }
+            .clipShape(shape)
+    }
+}
+
+/// Bjælke med ét felt pr. vane. Det aktuelle felt er den eneste knap (Apple: helst ét interaktivt element).
+struct HabitSegmentBar: View {
+    let state: SealActivityAttributes.ContentState
+    let dark: Bool
+
+    var body: some View {
+        let list = state.habitList
+        HStack(spacing: 4) {
+            ForEach(Array(list.enumerated()), id: \.element.id) { i, h in
+                let shape = UnevenRoundedRectangle(topLeadingRadius: i == 0 ? 19 : 8, bottomLeadingRadius: i == 0 ? 19 : 8,
+                                                   bottomTrailingRadius: i == list.count - 1 ? 19 : 8,
+                                                   topTrailingRadius: i == list.count - 1 ? 19 : 8, style: .continuous)
+                let c = IslandPalette.color(i)
+                if h.id == state.next?.id {
+                    Button(intent: CompleteHabitIntent(habitID: h.id)) {
+                        HStack(spacing: 5) {
+                            Image(systemName: "checkmark").font(.system(size: 13, weight: .heavy))
+                            Text("\(h.icon) Klaret").font(.rounded(14, .black)).lineLimit(1).minimumScaleFactor(0.7)
+                        }
+                        .foregroundStyle(Color(hex: 0x0B0B0B))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(shape.fill(c))
+                    }
+                    .buttonStyle(.plain)
+                    .layoutPriority(1)
+                    .frame(minWidth: 96)
+                } else if h.isDone {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 13, weight: .heavy))
+                        .foregroundStyle(dark ? c : Theme.ink)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(shape.fill(c.opacity(dark ? 0.3 : 0.55)))
+                } else {
+                    Text(h.icon)
+                        .font(.system(size: 14))
+                        .opacity(0.55)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(shape.fill(dark ? Color.white.opacity(0.11) : Theme.ink.opacity(0.08)))
+                }
+            }
+        }
+        .frame(height: 38)
+    }
+}
+
+/// Små streger i compact: farvede = klaret, lys = næste.
+struct MiniBars: View {
+    let state: SealActivityAttributes.ContentState
+
+    var body: some View {
+        let list = Array(state.habitList.prefix(7))
+        HStack(spacing: 3) {
+            ForEach(Array(list.enumerated()), id: \.element.id) { i, h in
+                Capsule()
+                    .fill(h.isDone ? IslandPalette.color(i)
+                          : (h.id == state.next?.id ? Color.white.opacity(0.55) : Color.white.opacity(0.18)))
+                    .frame(width: 4, height: 15)
             }
         }
     }
 }
+
+/// Sælen i en cirkel, hvor vandet stiger med dagens fremskridt (fra variant "Rejsen").
+struct WaterSeal: View {
+    let color: SealColor
+    let mood: MoodState
+    let progress: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            let d = min(geo.size.width, geo.size.height)
+            ZStack {
+                Circle().fill(IslandPalette.ocean.opacity(0.14))
+                SealFigure(color: color, state: mood, animated: false)
+                    .frame(width: d * 0.8, height: d * 0.8)
+                    .offset(y: -d * 0.04)
+                WaveShape(level: 0.2 + 0.3 * progress, phase: 0)
+                    .fill(Color(hex: 0x3E9BD6).opacity(0.88))
+            }
+            .frame(width: d, height: d)
+            .clipShape(Circle())
+            .animation(.spring(duration: 0.9), value: progress)
+        }
+    }
+}
+
+/// Bølge, der fylder `level` (0–1) af højden nedefra. Animerbar.
+struct WaveShape: Shape {
+    var level: Double
+    var phase: Double
+
+    var animatableData: Double {
+        get { level }
+        set { level = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let y: CGFloat = rect.maxY - rect.height * CGFloat(level)
+        let amp: CGFloat = max(1.5, rect.height * 0.07)
+        let waves: Double = 2
+        var p = Path()
+        p.move(to: CGPoint(x: rect.minX, y: y))
+        let steps = 24
+        for k in 1...steps {
+            let t = Double(k) / Double(steps)
+            let x: CGFloat = rect.minX + rect.width * CGFloat(t)
+            let a: Double = (t * waves + phase) * 2 * Double.pi
+            p.addLine(to: CGPoint(x: x, y: y + CGFloat(sin(a)) * amp))
+        }
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        p.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        p.closeSubpath()
+        return p
+    }
+}
+
+// MARK: Låseskærm (lys, 14 pt marginer)
 
 struct LiveActivityView: View {
     let attributes: SealActivityAttributes
     let state: SealActivityAttributes.ContentState
 
     var body: some View {
-        let st = MoodState(rawValue: state.moodStateRaw) ?? .content
         let color = SealColor(rawValue: attributes.colorRaw) ?? .gray
-        let progress = state.total > 0 ? Double(state.done) / Double(state.total) : 0
-        HStack(spacing: 14) {
-            SealFigure(color: color, state: st, animated: false)
-                .frame(width: 64, height: 64)
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text(attributes.sealName)
-                        .font(.rounded(17, .heavy))
-                        .foregroundStyle(Theme.ink)
-                    Spacer()
-                    Text("\(state.done)/\(state.total)")
-                        .font(.rounded(17, .heavy))
+        let mood: MoodState = state.allDone ? .happy : (MoodState(rawValue: state.moodStateRaw) ?? .content)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                WaterSeal(color: color, mood: mood, progress: state.progress)
+                    .frame(width: 38, height: 38)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(attributes.sealName).font(.rounded(15, .heavy)).foregroundStyle(Theme.ink)
+                    Text(state.message).font(.rounded(11, .bold)).foregroundStyle(Theme.inkSoft).lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text("\(state.remaining)")
+                        .font(.rounded(22, .black))
                         .foregroundStyle(Theme.oceanDark)
+                        .contentTransition(.numericText(value: Double(state.remaining)))
+                    Text(state.remaining == 1 ? "vane tilbage" : "vaner tilbage")
+                        .font(.rounded(11, .bold)).foregroundStyle(Theme.inkSoft)
                 }
-                Text(state.message)
-                    .font(.rounded(13, .semibold))
-                    .foregroundStyle(Theme.inkSoft)
-                    .lineLimit(1)
-                GeometryReader { g in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(.white)
-                        Capsule().fill(Theme.oceanDeep)
-                            .frame(width: max(8, g.size.width * CGFloat(progress)))
-                    }
+            }
+            if !state.habitList.isEmpty {
+                NextHabitTitle(state: state, sealName: attributes.sealName, dark: false)
+                SeaPanel(dark: false, corners: 14) {
+                    HabitSegmentBar(state: state, dark: false)
                 }
-                .frame(height: 9)
             }
         }
+        .animation(.spring(duration: 0.6), value: state.done)
     }
 }

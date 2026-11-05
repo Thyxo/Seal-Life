@@ -165,7 +165,13 @@ struct DeveloperView: View {
                                            dayKey: "debug")
         let state = SealActivityAttributes.ContentState(
             mood: store.profile.mood, moodStateRaw: store.moodState.rawValue,
-            done: 1, total: 4, place: "Nyhavn", message: "Test: ved Nyhavn · 3 tilbage")
+            done: 1, total: 4, place: "Nyhavn", message: "Test: ved Nyhavn · 3 tilbage",
+            habits: [
+                LiveHabit(id: "debug-vand", name: "Drik vand", icon: "💧", target: 1, done: 1),
+                LiveHabit(id: "debug-gaa", name: "Gå en tur", icon: "🚶", target: 1, done: 0),
+                LiveHabit(id: "debug-laes", name: "Læs 20 min", icon: "📚", target: 1, done: 0),
+                LiveHabit(id: "debug-ryd", name: "Ryd op", icon: "🧹", target: 1, done: 0),
+            ])
         do {
             _ = try Activity<SealActivityAttributes>.request(
                 attributes: attrs, content: ActivityContent(state: state, staleDate: nil), pushType: nil)
@@ -183,6 +189,10 @@ struct DeveloperView: View {
         }
         var s = a.content.state
         s.done = min(s.total, s.done + 1)
+        if var list = s.habits, let i = list.firstIndex(where: { !$0.isDone }) {
+            list[i].done = list[i].target
+            s.habits = list
+        }
         let left = s.total - s.done
         s.message = left == 0 ? "Test: hjemme igen – alt klaret! 💙" : "Test: ved Nyhavn · \(left) tilbage"
         let newState = s
