@@ -306,7 +306,8 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
       <div class="card">
         <div class="row"><span class="lbl">Variant</span>
           <div class="seg" id="segV">
-            <button data-v="1" aria-pressed="true">1 · Ringe</button>
+            <button data-v="4" aria-pressed="true">★ Valgt</button>
+            <button data-v="1" aria-pressed="false">1 · Ringe</button>
             <button data-v="2" aria-pressed="false">2 · Næste vane</button>
             <button data-v="3" aria-pressed="false">3 · Rejsen</button>
           </div>
@@ -362,7 +363,7 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
   </section>
 
   <section class="board" aria-label="Oversigt over alle varianter">
-    <div><div class="eyebrow">Oversigt</div><h2>Alle tre varianter på én tavle</h2></div>
+    <div><div class="eyebrow">Oversigt</div><h2>Valgt løsning og de tre varianter</h2></div>
     <div id="board" class="board"></div>
   </section>
 </div>
@@ -371,15 +372,15 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
 (() => {
 /* ================= Data ================= */
 const HABITS0 = [
-  {id:'gaa',  name:'Gå tur',           short:'Gå',    icon:'walk',    color:'#6FE0B0'},
-  {id:'vand', name:'Drik vand',        short:'Vand',  icon:'drop',    color:'#6CC4F5'},
-  {id:'laes', name:'Læs 20 min',       short:'Læs',   icon:'book',    color:'#B9B0FF'},
-  {id:'ryd',  name:'Ryd op på værelset',short:'Ryd op',icon:'sparkle', color:'#FFC94D'},
-  {id:'stræk',name:'Stræk ud',         short:'Stræk', icon:'leaf',    color:'#FF8A8A'},
+  {id:'gaa',  name:'Gå tur',           short:'Gå',    icon:'walk',    color:'#6FE0B0', emoji:'🚶'},
+  {id:'vand', name:'Drik vand',        short:'Vand',  icon:'drop',    color:'#6CC4F5', emoji:'💧'},
+  {id:'laes', name:'Læs 20 min',       short:'Læs',   icon:'book',    color:'#B9B0FF', emoji:'📚'},
+  {id:'ryd',  name:'Ryd op på værelset',short:'Ryd op',icon:'sparkle', color:'#FFC94D', emoji:'🧹'},
+  {id:'stræk',name:'Stræk ud',         short:'Stræk', icon:'leaf',    color:'#FF8A8A', emoji:'🧘'},
 ];
 const OCEAN = 'var(--i-ocean)', SUN = 'var(--i-sun)';
 const state = {
-  v:1, pres:'compact', prevPres:'compact', zones:false, lim:false,
+  v:4, pres:'compact', prevPres:'compact', zones:false, lim:false,
   habits: HABITS0.map((h,i)=>({...h, done:i<2})),
   streak:12, seal:'Bølle', place:'Nyhavn', celebrating:false, ended:false,
 };
@@ -501,6 +502,40 @@ const V = {
       </div>`},
    };},
  },
+ 4:{ name:'Valgt', side:46,
+   expH:()=>156,
+   cl:c=> c.next ? `<span class="${changed('c4-next',c.next.id)?'swap':''}" style="width:26px;height:26px;border-radius:50%;background:${c.next.color};display:grid;place-items:center;font-size:14px;line-height:1">${c.next.emoji}</span>` : seal(24,'happy'),
+   ct:c=> V[2].ct(c),
+   min:c=> water(27,c.done/c.total,'w-main',c.mood),
+   lim:c=> water(26,c.done/c.total,'w-main',c.mood),
+   title:(c,sw)=> c.next
+      ? `<div class="it ${sw?'swap':''}" style="display:flex;align-items:baseline;gap:7px;white-space:nowrap"><span class="eb">Næste</span><span class="mid" style="font-size:18px">${c.next.name}</span></div>`
+      : `<div class="it swap" style="display:flex;align-items:baseline;gap:7px;white-space:nowrap"><span class="eb">Alt klaret</span><span class="mid" style="font-size:18px">${state.seal} er hjemme 💙</span></div>`,
+   bar:(c,sw,prevNext)=> `<div class="segbar">${c.hs.map(h=>{
+        const isNext = c.next && h.id===c.next.id;
+        if(isNext) return `<button class="sg next${sw?' grow':''}" style="--c:${h.color}" data-act="next" data-id="${h.id}" aria-label="Markér ${h.name} som klaret">${check(16,'#0b0b0b')}<span>${h.emoji} Klaret</span></button>`;
+        if(h.done) return `<span class="sg done${sw&&prevNext===h.id?' shrink':''}" style="--c:${h.color}">${check(16,h.color)}</span>`;
+        return `<span class="sg"><span style="font-size:14px;opacity:.55;line-height:1">${h.emoji}</span></span>`;
+      }).join('')}</div>`,
+   exp:(c)=>{
+     const nk = c.next ? c.next.id : 'none'; const sw = changed('e4-next',nk); const prevNext = sw ? prevN.get('e4-next') : null;
+     return {
+     leading:{a:'1/1/2/2', h:`<div style="display:flex;align-items:center">${seal(38,c.mood)}</div>`},
+     trailing:{a:'1/3/2/4', end:1, h:`<div class="it"><div class="big hc" style="color:${c.next?c.next.color:OCEAN}">${num('n-rem',c.remaining)}</div><div class="sm">${c.remaining===1?'vane':'vaner'} tilbage</div></div>`},
+     bottom:{a:'2/1/4/4', raw:1, h:`<div style="display:flex;flex-direction:column;gap:6px;width:100%">${V[4].title(c,sw)}${sea(V[4].bar(c,sw,prevNext))}</div>`},
+   };},
+   lock:c=>{
+     const nk = c.next ? c.next.id : 'none'; const sw = changed('l4-next',nk); const prevNext = sw ? prevN.get('l4-next') : null;
+     const msg = c.all ? 'Hjemme igen – alt klaret! 💙' : c.done===0 ? `Svømmer ud til ${state.place}` : `Ved ${state.place} · ${c.remaining} tilbage`;
+     return `<div style="padding:14px;display:flex;flex-direction:column;gap:8px">
+       <div style="display:flex;align-items:center;gap:10px">${water(38,c.done/c.total,'w-lock',c.mood)}
+         <div class="it" style="flex:1;min-width:0"><div class="mid">${state.seal}</div><div class="sm" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${msg}</div></div>
+         <div class="it" style="text-align:right"><div class="big" style="color:var(--i-ocean)">${num('l-rem',c.remaining)}</div><div class="sm">${c.remaining===1?'vane':'vaner'} tilbage</div></div></div>
+       ${V[4].title(c,sw)}
+       ${sea(V[4].bar(c,sw,prevNext))}
+     </div>`;
+   },
+ },
 };
 
 /* ================= Geometri (pt = px) ================= */
@@ -518,9 +553,10 @@ function geom(pres){
 const $ = s => document.querySelector(s);
 const island=$('#island'), ic=$('#ic'), screen=$('#screen'), det=$('#detached'), lockb=$('#lockbanner'), camzone=$('#camzone'), lim28=$('#lim28');
 
+const sea = h => `<div class="sea">${WAVES}<div class="cnt">${h}</div></div>`;
 function regionsHTML(r){
   return ['leading','trailing','center','bottom'].filter(k=>r[k]).map(k=>{
-    const x=r[k]; const body = k==='bottom' ? `<div class="sea">${WAVES}<div class="cnt">${x.h}</div></div>` : x.h;
+    const x=r[k]; const body = k==='bottom' && !x.raw ? sea(x.h) : x.h;
     return `<div class="rg${x.end?' end':''}${k==='bottom'?' bottom':''}" data-r="${k}" style="grid-area:${x.a}">${body}</div>`;
   }).join('');
 }
@@ -573,7 +609,7 @@ function render(opts={}){
   // låseskærm
   if(state.pres==='lock' && !state.ended){
     lockb.style.display='block';
-    lockb.innerHTML = `<div class="exp">${regionsHTML(V[state.v].exp(c))}</div>`; commit(lockb);
+    lockb.innerHTML = V[state.v].lock ? V[state.v].lock(c) : `<div class="exp">${regionsHTML(V[state.v].exp(c))}</div>`; commit(lockb);
     lockb.classList.toggle('zones', state.zones);
   } else lockb.style.display = state.pres==='lock' && state.ended ? 'none' : lockb.style.display;
   if(state.pres!=='lock') lockb.style.display='none';
@@ -712,6 +748,18 @@ $('#aDemo').addEventListener('click',()=>{ if($('#aDemo').textContent.startsWith
 
 /* ================= Noter pr. variant ================= */
 const NOTES = {
+ 4:{title:'★ Valgt', idea:'Den løsning, der er bygget i appen: “Næste vane” (variant 2) med vandcirklen fra “Rejsen” (variant 3) som minimal. Vanerne vises med deres emoji, ligesom i appen.',
+   rows:[['Minimal','Sælen i en cirkel, hvor vandet stiger med dagens fremskridt (fra variant 3).'],['Compact','Venstre: næste vanes emoji i en farvet cirkel. Højre: en lille streg pr. vane, farvet når den er klaret.'],['Expanded','Sæl og antal tilbage øverst, “NÆSTE Læs 20 min”, og nederst havpanelet med bølger og en bjælke med ét felt pr. vane.'],['Låseskærm','Lys baggrund: vandcirkel, navn, status og antal tilbage, og derunder samme bjælke.'],['Knapper','Kun feltet for næste vane er en knap (“📚 Klaret”). Den kører <code>CompleteHabitIntent</code>, som afkrydser og opdaterer øen med det samme. Den kan ikke fortryde.'],['Farver','Vanerne har ingen farve i appen, så de får farve efter rækkefølge: mint, blå, lilla, gul, rød.'],['Alt klaret','Kort alert (øen udvides), derefter afsluttes aktiviteten og bliver 30 min på låseskærmen.']],
+   checks:[['y','Ét interaktivt element, som Apple anbefaler.'],['y','Minimal viser fremskridt (vandstand) og ikke kun et logo.'],['w','Kun prøvet i mockuppen. Swift-koden er ikke testet på en telefon endnu.']],
+   code:`// Widget/SealWidget.swift
+} minimal: {
+  WaterSeal(color: color, mood: mood, progress: s.progress)
+    .frame(width: 27, height: 27)
+}
+// Knappen i bjælken:
+Button(intent: CompleteHabitIntent(habitID: h.id)) {
+  Label("\(h.icon) Klaret", systemImage: "checkmark")
+}`},
  1:{title:'1 · Ringe', idea:'Hver vane har sin egen ring, ligesom aktivitetsringene på et ur. Streaken står øverst. Inspireret af kortet med “27 day streak”.',
    rows:[['Minimal','Ring om sælens hoved, der fyldes efterhånden som vanerne klares.'],['Compact','Venstre: ringen med sælen. Højre: “2/5” i samme blå farve, så de to sider læses som én oplysning.'],['Expanded','Streak og antal øverst. Nederst et lyst havpanel med bølger og fem ringe, en for hver vane.'],['Knapper','Hver ring er en <code>Button(intent: ToggleHabitIntent(habitID:))</code>. Tryk afkrydser, og et nyt tryk fortryder. Appen åbner ikke.'],['Animationer','Ringen fyldes på 0,9 sek., og tallet ruller op med <code>.contentTransition(.numericText())</code>.']],
    checks:[['w','Fem knapper. Apple foretrækker ét interaktivt element, fordi flere giver risiko for fejltryk. Hver ring er 40 pt, og med etiketten under bliver trykfladen ca. 54 pt høj (minimum 44).'],['y','Fortryd-tryk virker, fordi intenten allerede kan begge dele.']],
@@ -783,12 +831,12 @@ $('#dock').innerHTML = [
 function boardHTML(){
   STATIC = true;
   const c = ctx(), keep = state.v, out=[];
-  for(const v of [1,2,3]){
+  for(const v of [4,1,2,3]){
     state.v = v; const VV = V[v];
     const compW = CAM + 2*VV.side, h = VV.expH(c);
     const camGap = `<span style="position:absolute;left:${VV.side}px;width:${CAM}px;top:0;bottom:0;display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:50%;margin-left:66px;background:radial-gradient(circle at 35% 35%,#2a3c6a 0 18%,#0d1220 40%,#06080d 70%)"></span></span>`;
     out.push(`<div class="brow">
-      <div class="bname"><h3>${NOTES[v].title}</h3><span>${v===1?'5 knapper':v===2?'1 knap':'Ingen knapper'}</span></div>
+      <div class="bname"><h3>${NOTES[v].title}</h3><span>${v===4?'1 knap · bygget i appen':v===1?'5 knapper':v===2?'1 knap':'Ingen knapper'}</span></div>
       <div class="bcell"><div style="position:relative;width:45px;height:${H}px;border-radius:${R}px;background:#000;display:grid;place-items:center">${VV.min(c)}</div><small>Minimal</small></div>
       <div class="bcell"><div style="position:relative;width:${compW}px;height:${H}px;border-radius:${R}px;background:#000">${camGap}<div class="cl" style="width:${VV.side}px;padding-left:5px">${VV.cl(c)}</div><div class="cr" style="width:${VV.side}px">${VV.ct(c)}</div></div><small>Compact</small></div>
       <div class="bcell bexp"><div class="bscale" data-w="371" style="width:100%;max-width:371px"><div class="bzoom" style="position:relative;width:371px;height:${h}px;border-radius:44px;background:#000;transform-origin:top left">${camGap.replace(`left:${VV.side}px`,'left:122.5px').replace('top:0;bottom:0','top:0;height:37.33px')}<div class="exp">${regionsHTML(VV.exp(c))}</div></div></div><small>Expanded</small></div>
