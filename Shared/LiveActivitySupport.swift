@@ -1,5 +1,6 @@
 import Foundation
 import AppIntents
+import WidgetKit
 #if canImport(ActivityKit)
 import ActivityKit
 
@@ -24,10 +25,33 @@ struct CompleteHabitIntent: LiveActivityIntent {
 
     func perform() async throws -> some IntentResult {
         guard let snap = SealSnapshot.completeFromLiveActivity(habitID: habitID) else { return .result() }
-        let state = LiveActivityContent.state(from: snap)
-        for activity in Activity<SealActivityAttributes>.activities
-        where activity.attributes.dayKey == snap.dayKey && activity.activityState == .active {
-            await LiveActivityContent.apply(state, to: activity, sealName: snap.sealName)
+        await LiveActivityContent.refresh(from: snap)
+        return .result()
+    }
+}
+
+// MARK: - Afkryds/fortryd fra hjemmeskærms-widgetten (large)
+
+/// Bruges af listen i large-widgetten. Som `LiveActivityIntent` kører den i appens proces,
+/// så Live Activity'en også opdateres, når man afkrydser fra hjemmeskærmen.
+struct ToggleHabitIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Afkryds vane"
+    static var description = IntentDescription("Afkrydser en vane for i dag.")
+    static var isDiscoverable: Bool = false
+
+    @Parameter(title: "Vane-ID")
+    var habitID: String
+
+    init() {}
+
+    init(habitID: String) {
+        self.habitID = habitID
+    }
+
+    func perform() async throws -> some IntentResult {
+        SealSnapshot.toggleFromWidget(habitID: habitID)
+        if let snap = SealSnapshot.load() {
+            await LiveActivityContent.refresh(from: snap)
         }
         return .result()
     }
@@ -42,9 +66,19 @@ enum LiveActivityContent {
     /// Aktiviteter, der er ved at afslutte (så alerten kun kommer én gang).
     @MainActor private static var finishing = Set<String>()
 
-    /// Bygger indholdet ud fra widget-snapshot (bruges af intenten, når appen ikke er åben).
-    static func state(from snap: SealSnapshot) -> SealActivityAttributes.ContentState {
-        let todays = snap.habits(on: Date())
+    /// Opdaterer widgets og dagens Live Activity ud fra snapshot (efter et tryk i ø eller widget).
+    static func refresh(from snap: SealSnapshot) async {
+        WidgetCenter.shared.reloadAllTimelines()
+        let state = state(from: snap)
+        for activity in Activity<SealActivityAttributes>.activities
+        where activity.attributes.dayKey == snap.dayKey && activity.activityState == .active {
+            await apply(state, to: activity, sealName: snap.sealName)
+        }
+    }
+
+    /// Bygger indholdet ud fra widget-snapshot (bruges af intents og af hjemmeskærms-widgetten).
+    static func state(from snap: SealSnapshot, date: Date = Date()) -> SealActivityAttributes.ContentState {
+        let todays = snap.habits(on: date)
         let habits = todays.map { LiveHabit(id: $0.id, name: $0.name, icon: $0.icon, target: $0.target, done: min($0.done, $0.target)) }
         let total = habits.reduce(0) { $0 + $1.target }
         let done = habits.reduce(0) { $0 + $1.done }

@@ -238,6 +238,35 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
 .appov code{background:#fff;border-radius:8px;padding:4px 8px;color:#3F7AA6}
 .appov button{margin-top:10px;font-family:var(--f-display);font-weight:900;font-size:16px;background:#3F7AA6;color:#fff;border:0;border-radius:22px;padding:12px 26px;cursor:pointer}
 
+/* ---------- Hjemmeskærms-widget ---------- */
+.wg{position:relative;overflow:hidden;border-radius:22px;padding:16px;font-family:var(--f-display);background:var(--wg-bg);color:var(--tx);box-shadow:0 6px 18px rgba(0,0,0,.18);flex:none}
+.wg.s{width:158px;height:158px}.wg.m{width:338px;height:158px}.wg.l{width:338px;height:354px}
+.wg.light{--tx:#1E3A4E;--tx2:#4D6779;--track:rgba(30,58,78,.14);--chip:rgba(30,58,78,.08);--dim:rgba(30,58,78,.45);--i-ocean:#2F86C0;--i-sun:#C08400;
+  --wg-bg:linear-gradient(170deg,#EEF7FC 0%,#D6ECF8 60%,#C6E3F4 100%);--wave1:rgba(94,156,199,.20);--wave2:rgba(94,156,199,.34);--foam:rgba(255,255,255,.9);--row:rgba(255,255,255,.62)}
+.wg.dark{--tx:#FFFFFF;--tx2:rgba(235,242,248,.74);--track:rgba(255,255,255,.17);--chip:rgba(255,255,255,.11);--dim:rgba(255,255,255,.62);--i-ocean:#6CC4F5;--i-sun:#FFC94D;
+  --wg-bg:linear-gradient(170deg,#0D2131 0%,#0F2E45 60%,#123A57 100%);--wave1:rgba(150,212,248,.18);--wave2:rgba(186,230,252,.30);--foam:rgba(220,242,255,.45);--row:rgba(255,255,255,.08)}
+.wg.light .hc{color:var(--tx)!important}
+.wg>.waves{position:absolute;left:0;right:0;bottom:0;width:100%;height:40px;pointer-events:none}
+.waves .w1{fill:var(--wave1)}.waves .w2{fill:var(--wave2)}.waves .fo{fill:none;stroke:var(--foam);stroke-width:1.2}
+.wg>.wc{position:relative;height:100%;display:flex;flex-direction:column;min-width:0}
+.wg .clip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wpill{height:34px;width:100%;border-radius:17px;border:0;background:var(--c);color:#0b0b0b;font-family:var(--f-display);font-weight:900;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;transition:transform .15s,filter .15s}
+.wpill:active,.wpill.pressed{transform:scale(.95);filter:brightness(.85)}
+.wrows{display:flex;flex-direction:column;gap:4px}
+.wrow{height:32px;border-radius:10px;background:var(--row);display:flex;align-items:center;gap:9px;padding:0 4px 0 10px}
+.wrow .em{font-size:15px;line-height:1;width:18px;text-align:center}
+.wrow .nm{flex:1;min-width:0;font-weight:800;font-size:13.5px}
+.wrow.done .nm{color:var(--tx2);text-decoration:line-through}
+.wtog{width:26px;height:26px;border-radius:8px;border:2px solid var(--c);background:transparent;display:grid;place-items:center;cursor:pointer;padding:0;transition:transform .15s}
+.wtog.on{background:var(--c)}
+.wtog:active,.wtog.pressed{transform:scale(.88)}
+.wstage{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;background:linear-gradient(180deg,#2d2f58,#7b5874 45%,#d98a6f 75%,#24506f);border-radius:22px;padding:22px}
+.homewg{position:absolute;inset:0;display:none}
+.screen.homewg-on .homewg{display:block}
+.screen.homewg-on #icons{display:none}
+.homewg .wg{position:absolute}
+.homewg .mini{position:absolute;display:grid;grid-template-columns:repeat(2,62px);gap:22px 30px}
+
 @media (prefers-reduced-motion: reduce){
   .island,.detached,.ap{transition-duration:.01s!important}
   .num.roll,.swap,.pop,.ic.in,.sg.grow,.sg.shrink,.swimmer.hop>svg{animation:none!important}
@@ -265,6 +294,7 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
                 <div class="wall"><div class="houses"></div></div>
                 <div class="home" id="home">
                   <div class="icons" id="icons"></div>
+                  <div class="homewg" id="homewg"></div>
                   <div class="dock" id="dock"></div>
                 </div>
                 <div class="lockui">
@@ -318,6 +348,7 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
             <button data-p="compact" aria-pressed="true">Compact</button>
             <button data-p="expanded" aria-pressed="false">Expanded</button>
             <button data-p="lock" aria-pressed="false">Låseskærm</button>
+            <button data-p="home" aria-pressed="false">Widgets</button>
           </div>
         </div>
         <div class="row"><span class="lbl">Simulér</span>
@@ -359,6 +390,24 @@ pre{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
           <li><span class="w">!</span><span>Koden afslutter i dag aktiviteten med <code>.after(+2 t)</code>. Apple anbefaler 15–30 min. Jeg foreslår 30 min.</span></li>
         </ul>
       </div>
+    </div>
+  </section>
+
+  <section class="board" aria-label="Hjemmeskærms-widget">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;justify-content:space-between">
+      <div><div class="eyebrow">Hjemmeskærm</div><h2>Widget i samme stil</h2>
+        <p class="lede">Small, medium og large i iPhone 15 Pro-mål (158, 338 × 158 og 338 × 354 pt) med 16 pt margin. Knapperne virker og hænger sammen med øen ovenfor. Prøv at trykke.</p></div>
+      <div class="seg" id="segT"><button data-t="light" aria-pressed="true">Lys</button><button data-t="dark" aria-pressed="false">Mørk</button></div>
+    </div>
+    <div class="wstage" id="wstage"></div>
+    <div class="card">
+      <dl class="dl">
+        <dt>Small</dt><dd>Vandcirklen med sælen, antal tilbage, næste vane og én knap (“💧 Klaret”).</dd>
+        <dt>Medium</dt><dd>Samme opbygning som den udvidede ø: næste vane øverst og bjælken med ét felt pr. vane, hvor det aktuelle felt er knappen.</dd>
+        <dt>Large</dt><dd>Sælens status øverst og alle dagens vaner som en liste med afkrydsning, ligesom Påmindelser-widgetten. Her kan man også fortryde.</dd>
+        <dt>Baggrund</dt><dd>Lyst eller mørkt hav med bølger i bunden. Indholdet holder 16 pt margin, og bølgerne er kun baggrund.</dd>
+        <dt>Knapper</dt><dd>Small og medium: <code>CompleteHabitIntent</code> (kun afkryds). Large: <code>ToggleHabitIntent</code> (afkryds og fortryd). Begge opdaterer nu også Live Activity'en med det samme.</dd>
+      </dl>
     </div>
   </section>
 
@@ -541,6 +590,7 @@ const V = {
 /* ================= Geometri (pt = px) ================= */
 const CX = 196.5, CAM = 126, H = 37.33, R = 18.67;
 function geom(pres){
+  if(pres==='home') pres='compact';
   const v = V[state.v], c = ctx();
   if(state.ended || pres==='lock') return {l:CX-CAM/2, t:11, w:CAM, h:H, r:R, mode:'rest'};
   if(pres==='compact' && state.lim) return {l:CX-CAM/2-40, t:11, w:CAM+40, h:H, r:R, mode:'lim'};
@@ -586,6 +636,8 @@ function render(opts={}){
   island.classList.toggle('zones', state.zones);
   screen.classList.toggle('hide-sb', g.mode==='expanded');
   screen.classList.toggle('lock', state.pres==='lock');
+  const homeOn = state.pres==='home' || (state.pres==='expanded' && state.prevPres==='home');
+  screen.classList.toggle('homewg-on', homeOn);
   // kamera-zone + 28pt guide
   const camL = (CX-CAM/2) - g.l;
   Object.assign(camzone.style,{left:camL+'px',width:CAM+'px'});
@@ -613,7 +665,62 @@ function render(opts={}){
     lockb.classList.toggle('zones', state.zones);
   } else lockb.style.display = state.pres==='lock' && state.ended ? 'none' : lockb.style.display;
   if(state.pres!=='lock') lockb.style.display='none';
+  renderWidgets();
   updateControls();
+}
+
+/* ================= Hjemmeskærms-widget ================= */
+let wTheme = 'light';
+const WWAVES = WAVES.replace('class="waves" viewBox="0 0 340 30"','class="waves" viewBox="0 0 340 30"');
+function widgetHTML(size, theme, pfx){
+  const c = ctx(), p = c.done/c.total;
+  const nc = c.next ? c.next.color : 'var(--i-ocean)';
+  const nk = c.next ? c.next.id : 'none'; const sw = changed(pfx+'next',nk); const prevNext = sw ? prevN.get(pfx+'next') : null;
+  const remBlock = `<div class="it" style="text-align:right;flex:none"><div class="big hc" style="color:${nc}">${num(pfx+'rem',c.remaining)}</div><div class="sm">tilbage</div></div>`;
+  const nextName = c.next ? c.next.name : `${state.seal} er hjemme 💙`;
+  let body = '';
+  if(size==='s'){
+    body = `<div style="display:flex;justify-content:space-between;align-items:flex-start">${water(48,p,pfx+'w',c.mood)}${remBlock}</div>
+      <div class="it ${sw?'swap':''}" style="margin-top:7px;min-width:0"><div class="eb">${c.next?'Næste':'Alt klaret'}</div><div class="mid clip" style="font-size:15px;margin-top:2px">${nextName}</div></div>
+      <div style="margin-top:auto">${c.next?`<button class="wpill" style="--c:${c.next.color}" data-act="next" data-id="${c.next.id}" aria-label="Markér ${c.next.name} som klaret">${check(14,'#0b0b0b')}<span>${c.next.emoji} Klaret</span></button>`:''}</div>`;
+  } else if(size==='m'){
+    body = `<div style="display:flex;align-items:center;gap:10px">${water(56,p,pfx+'w',c.mood)}
+        <div class="it ${sw?'swap':''}" style="flex:1;min-width:0"><div class="eb">${c.next?'Næste':'Alt klaret'}</div><div class="mid clip" style="font-size:18px;margin-top:2px">${nextName}</div><div class="sm clip" style="margin-top:3px">${state.seal} · ${c.all?'hjemme igen':'mod '+state.place}</div></div>
+        ${remBlock}</div>
+      <div style="margin-top:auto">${V[4].bar(c,sw,prevNext)}</div>`;
+  } else {
+    body = `<div style="display:flex;align-items:center;gap:12px">${water(64,p,pfx+'w',c.mood)}
+        <div class="it" style="flex:1;min-width:0"><div class="mid" style="font-size:20px">${state.seal}</div><div class="sm clip" style="margin-top:3px">${c.all?'Glad · hjemme fra '+state.place:'Tilfreds · mod '+state.place}</div></div>
+        <div class="it" style="text-align:right;flex:none"><div class="big" style="color:var(--i-ocean)">${num(pfx+'done',c.done)}/${c.total}</div><div class="sm">i dag</div></div></div>
+      <div class="wrows" style="margin-top:14px">${c.hs.map(h=>`<div class="wrow${h.done?' done':''}"><span class="em">${h.emoji}</span><span class="nm clip">${h.name}</span><button class="wtog${h.done?' on':''}" style="--c:${h.color}" data-act="toggle" data-id="${h.id}" aria-pressed="${h.done}" aria-label="${h.name}: ${h.done?'klaret, tryk for at fortryde':'tryk for at afkrydse'}">${h.done?check(13,'#0b0b0b'):''}</button></div>`).join('')}</div>
+      <div class="sm" style="margin-top:auto;padding-bottom:22px;position:relative">🐟 ${34+c.done*3} fisk · ${c.all?`${state.seal} er hjemme med en historie`:`Klar resten, så kommer ${state.seal} hjem`}</div>`;
+  }
+  return `<div class="wg ${size} ${theme}">${WWAVES}<div class="wc">${body}</div></div>`;
+}
+function renderWidgets(){
+  const st = $('#wstage'); if(!st) return;
+  st.innerHTML = ['s','m','l'].map(z=>widgetHTML(z,wTheme,'ws'+z)).join(''); commit(st);
+  const hw = $('#homewg');
+  if(state.pres==='home' || (state.pres==='expanded' && state.prevPres==='home')){
+    hw.innerHTML = `<div style="position:absolute;top:66px;left:27.5px">${widgetHTML('m',wTheme,'hm')}</div>
+      <div style="position:absolute;top:246px;left:27.5px">${widgetHTML('s',wTheme,'hs')}</div>
+      <div class="mini" style="top:250px;left:212px">${$('#icons').innerHTML}</div>`;
+    hw.querySelectorAll('.wg').forEach(w=>w.style.position='relative');
+    commit(hw);
+  } else hw.innerHTML='';
+}
+function widgetClick(e){
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  e.stopPropagation(); pressFeedback(b);
+  const h = state.habits.find(x=>x.id===b.dataset.id); if(!h) return;
+  if(state.ended || state.celebrating){ if(!h.done) return; }
+  const src = b.dataset.act==='toggle' ? 'ToggleHabitIntent' : 'CompleteHabitIntent';
+  if(b.dataset.act==='next' && h.done) return;
+  h.done = !h.done;
+  log('Widget',`<code>${src}(habitID:"${h.id}")</code> → ${h.done?'klaret':'fortrudt'} → widget og Live Activity opdateret`);
+  if(ctx().all && !state.celebrating){ celebrate(); return; }
+  if(!ctx().all && state.ended){ state.ended=false; state.celebrating=false; }
+  render();
 }
 let renderTick = 0;
 
@@ -631,7 +738,7 @@ function setPres(p, why){
   if(state.ended && p!=='lock'){ state.ended=false; }
   state.prevPres = state.pres==='expanded' ? state.prevPres : state.pres;
   state.pres = p; render();
-  const cap = {minimal:'Minimal: der kører flere Live Activities (her også et æggeur)', compact:'Compact: én aktiv Live Activity', expanded:'Expanded: vises, når man holder fingeren på øen', lock:'Låseskærm: lys baggrund, samme layout som expanded og marginer på 14 pt'};
+  const cap = {minimal:'Minimal: der kører flere Live Activities (her også et æggeur)', compact:'Compact: én aktiv Live Activity', expanded:'Expanded: vises, når man holder fingeren på øen', lock:'Låseskærm: lys baggrund, samme layout som expanded og marginer på 14 pt', home:'Hjemmeskærm: medium- og small-widget, mens øen står i compact'};
   caption(why || cap[p]);
 }
 function toggleHabit(id, src){
@@ -649,11 +756,11 @@ function celebrate(){
   state.celebrating = true;
   celebTimers.forEach(clearTimeout); celebTimers=[];
   const back = state.pres==='lock' ? 'lock' : (state.pres==='expanded' ? state.prevPres : state.pres);
-  if(state.pres!=='lock'){ state.pres='expanded'; }
+  if(state.pres!=='lock'){ if(state.pres!=='expanded') state.prevPres=state.pres; state.pres='expanded'; }
   render();
   caption('Alert: alt er klaret, så øen udvider sig selv i et par sekunder');
   log('Alert','<code>update(content, alertConfiguration:)</code>, så øen udvides');
-  celebTimers.push(setTimeout(()=>{ if(state.pres!=='lock') state.pres = back==='minimal'?'minimal':'compact'; render(); caption('Folder sig sammen igen og viser 5/5'); }, 3400));
+  celebTimers.push(setTimeout(()=>{ if(state.pres!=='lock') state.pres = back==='minimal'?'minimal':back==='home'?'home':'compact'; render(); caption('Folder sig sammen igen og viser 5/5'); }, 3400));
   celebTimers.push(setTimeout(()=>{ state.ended = true; render(); caption('Aktiviteten afsluttes: væk fra øen med det samme, og op til 30 min på låseskærmen'); log('Slut','<code>activity.end(_, dismissalPolicy: .after(+30 min))</code>'); }, 5600));
 }
 function resetDay(){
@@ -860,6 +967,9 @@ window.addEventListener('resize', fit);
 
 /* ================= Start ================= */
 $('#board').innerHTML = boardHTML();
+$('#wstage').addEventListener('click', widgetClick);
+$('#homewg').addEventListener('click', widgetClick);
+document.querySelectorAll('#segT button').forEach(b=>b.addEventListener('click',()=>{ wTheme=b.dataset.t; document.querySelectorAll('#segT button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); renderWidgets(); }));
 renderNotes();
 render();
 setTimeout(()=>{ state.pres='compact'; },0);
