@@ -116,7 +116,8 @@ struct SealWidgetView: View {
     }
 
     private func water(_ size: CGFloat) -> some View {
-        WaterSeal(color: snap.color, mood: mood, progress: state.progress)
+        WaterSeal(color: snap.color, mood: mood, progress: state.progress,
+                  hat: snap.hat, glasses: snap.glasses, neck: snap.neck)
             .frame(width: size, height: size)
     }
 
@@ -515,13 +516,17 @@ struct WaterSeal: View {
     let color: SealColor
     let mood: MoodState
     let progress: Double
+    /// Tøj vises kun i hjemmeskærms-widgetten (øen er for lille).
+    var hat: String? = nil
+    var glasses: String? = nil
+    var neck: String? = nil
 
     var body: some View {
         GeometryReader { geo in
             let d = min(geo.size.width, geo.size.height)
             ZStack {
                 Circle().fill(IslandPalette.ocean.opacity(0.14))
-                SealFigure(color: color, state: mood, animated: false)
+                SealFigure(color: color, state: mood, hat: hat, glasses: glasses, neck: neck, animated: false)
                     .frame(width: d * 0.8, height: d * 0.8)
                     .offset(y: -d * 0.04)
                 WaveShape(level: 0.2 + 0.3 * progress, phase: 0)
