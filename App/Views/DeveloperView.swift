@@ -171,7 +171,8 @@ struct DeveloperView: View {
                 LiveHabit(id: "debug-gaa", name: "Gå en tur", icon: "🚶", target: 1, done: 0),
                 LiveHabit(id: "debug-laes", name: "Læs 20 min", icon: "📚", target: 1, done: 0),
                 LiveHabit(id: "debug-ryd", name: "Ryd op", icon: "🧹", target: 1, done: 0),
-            ])
+            ],
+            style: LiveActivityStyle.current.rawValue)
         do {
             _ = try Activity<SealActivityAttributes>.request(
                 attributes: attrs, content: ActivityContent(state: state, staleDate: nil), pushType: nil)
@@ -188,6 +189,7 @@ struct DeveloperView: View {
             return
         }
         var s = a.content.state
+        s.style = LiveActivityStyle.current.rawValue
         s.done = min(s.total, s.done + 1)
         if var list = s.habits, let i = list.firstIndex(where: { !$0.isDone }) {
             list[i].done = list[i].target

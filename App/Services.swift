@@ -147,7 +147,8 @@ enum LiveActivityManager {
         let state = SealActivityAttributes.ContentState(
             mood: store.profile.mood, moodStateRaw: store.moodState.rawValue,
             done: store.todayDone, total: store.todayTotal,
-            place: store.adventurePlace.name, message: message, habits: habits)
+            place: store.adventurePlace.name, message: message, habits: habits,
+            style: LiveActivityStyle.current.rawValue)
         let sealName = store.profile.name
         let shouldShow = enabled && store.profile.onboarded && store.todayTotal > 0 && !store.profile.onVacation
         let allDone = store.allDoneToday

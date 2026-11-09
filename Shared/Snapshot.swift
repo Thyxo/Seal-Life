@@ -144,6 +144,30 @@ enum PendingQueue {
 // MARK: - Live Activity
 
 #if canImport(ActivityKit)
+/// Hvilket design Live Activity'en bruger. Gemmes i App Group, så widget og intents kan læse det.
+enum LiveActivityStyle: String, Codable, CaseIterable, Identifiable {
+    case classic, modern
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .classic: return "Klassisk"
+        case .modern: return "Ny"
+        }
+    }
+
+    private static let key = "liveActivityStyle"
+    private static var defaults: UserDefaults {
+        AppGroup.identifier.flatMap { UserDefaults(suiteName: $0) } ?? .standard
+    }
+
+    static var current: LiveActivityStyle {
+        get { defaults.string(forKey: key).flatMap(LiveActivityStyle.init(rawValue:)) ?? .modern }
+        set { defaults.set(newValue.rawValue, forKey: key) }
+    }
+}
+
 /// Én vane, som Live Activity'en viser (holdes lille – hele ContentState skal under 4 KB).
 struct LiveHabit: Codable, Hashable, Identifiable {
     var id: String
@@ -165,6 +189,10 @@ struct SealActivityAttributes: ActivityAttributes {
         var message: String
         /// Dagens vaner i rækkefølge. Valgfri, så aktiviteter fra en ældre version stadig kan læses.
         var habits: [LiveHabit]? = nil
+        /// Design (LiveActivityStyle.rawValue). Ligger i indholdet, så et skift slår igennem ved næste opdatering.
+        var style: String? = nil
+
+        var styleValue: LiveActivityStyle { style.flatMap(LiveActivityStyle.init(rawValue:)) ?? .modern }
 
         var habitList: [LiveHabit] { habits ?? [] }
         var next: LiveHabit? { habitList.first { !$0.isDone } }

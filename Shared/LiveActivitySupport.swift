@@ -91,7 +91,8 @@ enum LiveActivityContent {
             message = "Ved \(snap.place) · \(total - done) tilbage"
         }
         return .init(mood: snap.mood, moodStateRaw: snap.moodState.rawValue, done: done, total: total,
-                     place: snap.place, message: message, habits: habits)
+                     place: snap.place, message: message, habits: habits,
+                     style: LiveActivityStyle.current.rawValue)
     }
 
     /// Opdaterer aktiviteten. Når alt er klaret: kort alert (øen udvides), derefter afslut.

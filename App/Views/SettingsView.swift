@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var notifications = NotificationScheduler.enabled
     @State private var maxPerDay = NotificationScheduler.maxPerDay
     @State private var liveActivity = LiveActivityManager.enabled
+    @State private var liveStyle = LiveActivityStyle.current
     @State private var shareFile: ShareFile?
     @State private var importing = false
     @State private var status: String?
@@ -94,6 +95,23 @@ struct SettingsView: View {
                             LiveActivityManager.enabled = v
                             store.syncOutside()
                         }
+                    if liveActivity {
+                        HStack {
+                            rowText("Design")
+                            Spacer()
+                            Picker("Design", selection: $liveStyle) {
+                                ForEach(LiveActivityStyle.allCases) { s in
+                                    Text(s.displayName).tag(s)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(width: 170)
+                            .onChange(of: liveStyle) { _, v in
+                                LiveActivityStyle.current = v
+                                store.syncOutside()
+                            }
+                        }
+                    }
                 }
                 .card()
                 .appearIn(0.06)

@@ -315,74 +315,123 @@ enum IslandPalette {
 struct SealLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: SealActivityAttributes.self) { context in
-            LiveActivityView(attributes: context.attributes, state: context.state)
-                .padding(14)
-                .activityBackgroundTint(Theme.oceanLight)
-                .activitySystemActionForegroundColor(Theme.oceanDark)
-        } dynamicIsland: { context in
-            let s = context.state
-            let color = SealColor(rawValue: context.attributes.colorRaw) ?? .gray
-            let mood: MoodState = s.allDone ? .happy : (MoodState(rawValue: s.moodStateRaw) ?? .content)
-            return DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    SealFigure(color: color, state: mood, animated: false)
-                        .frame(width: 38, height: 38)
-                        .padding(.leading, 12)
-                        .padding(.top, 2)
-                }
-                DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text("\(s.remaining)")
-                            .font(.rounded(22, .black))
-                            .foregroundStyle(nextColor(s))
-                            .contentTransition(.numericText(value: Double(s.remaining)))
-                        Text(s.remaining == 1 ? "vane tilbage" : "vaner tilbage")
-                            .font(.rounded(11, .bold))
-                            .foregroundStyle(.white.opacity(0.74))
-                    }
-                    .padding(.trailing, 12)
-                    .padding(.top, 2)
-                }
-                DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        NextHabitTitle(state: s, sealName: context.attributes.sealName, dark: true)
-                            .padding(.horizontal, 12)
-                        SeaPanel(dark: true, corners: 34) {
-                            HabitSegmentBar(state: s, dark: true)
-                        }
-                    }
-                    .animation(.spring(duration: 0.6), value: s.done)
-                }
-            } compactLeading: {
-                if let next = s.next, let idx = s.habitList.firstIndex(of: next) {
-                    Text(next.icon)
-                        .font(.system(size: 14))
-                        .frame(width: 26, height: 26)
-                        .background(Circle().fill(IslandPalette.color(idx)))
-                        .id(next.id)
-                        .transition(.push(from: .bottom))
+            Group {
+                if context.state.styleValue == .classic {
+                    ClassicLiveActivityView(attributes: context.attributes, state: context.state)
                 } else {
-                    SealFigure(color: color, state: .happy, animated: false).frame(width: 26, height: 26)
+                    LiveActivityView(attributes: context.attributes, state: context.state)
                 }
-            } compactTrailing: {
-                MiniBars(state: s)
-                    .padding(.trailing, 4)
-            } minimal: {
-                WaterSeal(color: color, mood: mood, progress: s.progress)
-                    .frame(width: 27, height: 27)
             }
-            .contentMargins(.leading, 5, for: .compactLeading)
-            .contentMargins(.all, 5, for: .minimal)
-            .contentMargins(.all, 10, for: .expanded)
-            .keylineTint(Theme.ocean)
+            .padding(14)
+            .activityBackgroundTint(Theme.oceanLight)
+            .activitySystemActionForegroundColor(Theme.oceanDark)
+        } dynamicIsland: { context in
+            if context.state.styleValue == .classic {
+                return Self.classicIsland(context)
+            }
+            return Self.modernIsland(context)
         }
     }
 
-    private func nextColor(_ s: SealActivityAttributes.ContentState) -> Color {
+    // MARK: Ny (redesign): sæl + "tilbage/i alt", ingen bølger
+
+    static func modernIsland(_ context: ActivityViewContext<SealActivityAttributes>) -> DynamicIsland {
+        let s = context.state
+        let color = SealColor(rawValue: context.attributes.colorRaw) ?? .gray
+        let mood: MoodState = s.allDone ? .happy : (MoodState(rawValue: s.moodStateRaw) ?? .content)
+        let accent = nextColor(s)
+        return DynamicIsland {
+            DynamicIslandExpandedRegion(.leading) {
+                SealFigure(color: color, state: mood, animated: false)
+                    .frame(width: 38, height: 38)
+                    .padding(.leading, 12)
+                    .padding(.top, 2)
+            }
+            DynamicIslandExpandedRegion(.trailing) {
+                VStack(alignment: .center, spacing: 1) {
+                    Text("\(s.remaining)")
+                        .font(.rounded(28, .black))
+                        .contentTransition(.numericText(value: Double(s.remaining)))
+                    Text("tilbage")
+                        .font(.rounded(11, .bold))
+                }
+                .foregroundStyle(accent)
+                .padding(.trailing, 12)
+                .padding(.top, 10)
+            }
+            DynamicIslandExpandedRegion(.bottom) {
+                VStack(alignment: .leading, spacing: 8) {
+                    NextHabitTitle(state: s, sealName: context.attributes.sealName, dark: true)
+                        .padding(.horizontal, 12)
+                    HabitSegmentBar(state: s, dark: true)
+                        .padding(.horizontal, 4)
+                }
+                .padding(.bottom, 4)
+                .animation(.spring(duration: 0.6), value: s.done)
+            }
+        } compactLeading: {
+            SealFigure(color: color, state: mood, animated: false)
+                .frame(width: 27, height: 27)
+        } compactTrailing: {
+            Text("\(s.remaining)/\(s.total)")
+                .font(.rounded(16, .black))
+                .foregroundStyle(IslandPalette.ocean)
+                .contentTransition(.numericText(value: Double(s.remaining)))
+                .padding(.trailing, 4)
+        } minimal: {
+            if s.allDone {
+                SealFigure(color: color, state: .happy, animated: false)
+                    .frame(width: 26, height: 26)
+            } else {
+                Text("\(s.remaining)/\(s.total)")
+                    .font(.rounded(13.5, .black))
+                    .foregroundStyle(IslandPalette.ocean)
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
+                    .contentTransition(.numericText(value: Double(s.remaining)))
+            }
+        }
+        .contentMargins(.leading, 5, for: .compactLeading)
+        .contentMargins(.all, 10, for: .expanded)
+        .keylineTint(Theme.ocean)
+    }
+
+    // MARK: Klassisk (det oprindelige design)
+
+    static func classicIsland(_ context: ActivityViewContext<SealActivityAttributes>) -> DynamicIsland {
+        let st = MoodState(rawValue: context.state.moodStateRaw) ?? .content
+        let color = SealColor(rawValue: context.attributes.colorRaw) ?? .gray
+        return DynamicIsland {
+            DynamicIslandExpandedRegion(.leading) {
+                SealFigure(color: color, state: st, animated: false).frame(width: 52, height: 52)
+            }
+            DynamicIslandExpandedRegion(.trailing) {
+                Text("\(context.state.done)/\(context.state.total)")
+                    .font(.rounded(20, .heavy))
+                    .foregroundStyle(.white)
+            }
+            DynamicIslandExpandedRegion(.bottom) {
+                Text(context.state.message)
+                    .font(.rounded(14, .semibold))
+                    .foregroundStyle(.white)
+            }
+        } compactLeading: {
+            Text("🦭")
+        } compactTrailing: {
+            Text("\(context.state.done)/\(context.state.total)")
+                .font(.rounded(13, .heavy))
+                .foregroundStyle(Theme.ocean)
+        } minimal: {
+            Text("🦭")
+        }
+    }
+
+    private static func nextColor(_ s: SealActivityAttributes.ContentState) -> Color {
         guard let n = s.next, let i = s.habitList.firstIndex(of: n) else { return IslandPalette.ocean }
         return IslandPalette.color(i)
     }
 }
+
 
 // MARK: Byggeklodser
 
@@ -414,38 +463,6 @@ struct NextHabitTitle: View {
             .id(state.next?.id ?? "done")
             .transition(.push(from: .bottom))
         }
-    }
-}
-
-/// Lyst havpanel med bølger i bunden – en indsat beholder, koncentrisk med øens hjørner.
-struct SeaPanel<Content: View>: View {
-    let dark: Bool
-    let corners: CGFloat
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        let shape = UnevenRoundedRectangle(topLeadingRadius: 18, bottomLeadingRadius: corners,
-                                           bottomTrailingRadius: corners, topTrailingRadius: 18,
-                                           style: .continuous)
-        let base: Color = dark ? IslandPalette.ocean : .white
-        content
-            .padding(.horizontal, 14)
-            .padding(.top, 9)
-            .padding(.bottom, 16)
-            .frame(maxWidth: .infinity)
-            .background(alignment: .bottom) {
-                ZStack(alignment: .bottom) {
-                    LinearGradient(colors: [base.opacity(dark ? 0.18 : 0.45), base.opacity(dark ? 0.38 : 0.75)],
-                                   startPoint: .top, endPoint: .bottom)
-                    WaveShape(level: 0.55, phase: 0)
-                        .fill((dark ? Color(hex: 0x96D4F8) : Theme.oceanDeep).opacity(dark ? 0.38 : 0.22))
-                        .frame(height: 17)
-                    WaveShape(level: 0.35, phase: 0.5)
-                        .fill((dark ? Color(hex: 0xBAE6FC) : Theme.oceanDeep).opacity(dark ? 0.6 : 0.38))
-                        .frame(height: 17)
-                }
-            }
-            .clipShape(shape)
     }
 }
 
@@ -569,7 +586,7 @@ struct WaveShape: Shape {
     }
 }
 
-// MARK: Låseskærm (lys, 14 pt marginer)
+// MARK: Låseskærm – Ny (lys, 14 pt marginer, ingen bølger)
 
 struct LiveActivityView: View {
     let attributes: SealActivityAttributes
@@ -587,22 +604,60 @@ struct LiveActivityView: View {
                     Text(state.message).font(.rounded(11, .bold)).foregroundStyle(Theme.inkSoft).lineLimit(1)
                 }
                 Spacer(minLength: 8)
-                VStack(alignment: .trailing, spacing: 0) {
+                VStack(alignment: .center, spacing: 1) {
                     Text("\(state.remaining)")
-                        .font(.rounded(22, .black))
-                        .foregroundStyle(Theme.oceanDark)
+                        .font(.rounded(28, .black))
                         .contentTransition(.numericText(value: Double(state.remaining)))
-                    Text(state.remaining == 1 ? "vane tilbage" : "vaner tilbage")
-                        .font(.rounded(11, .bold)).foregroundStyle(Theme.inkSoft)
+                    Text("tilbage")
+                        .font(.rounded(11, .bold))
                 }
+                .foregroundStyle(Theme.oceanDark)
             }
             if !state.habitList.isEmpty {
                 NextHabitTitle(state: state, sealName: attributes.sealName, dark: false)
-                SeaPanel(dark: false, corners: 14) {
-                    HabitSegmentBar(state: state, dark: false)
-                }
+                HabitSegmentBar(state: state, dark: false)
             }
         }
         .animation(.spring(duration: 0.6), value: state.done)
+    }
+}
+
+// MARK: Låseskærm – Klassisk (det oprindelige design)
+
+struct ClassicLiveActivityView: View {
+    let attributes: SealActivityAttributes
+    let state: SealActivityAttributes.ContentState
+
+    var body: some View {
+        let st = MoodState(rawValue: state.moodStateRaw) ?? .content
+        let color = SealColor(rawValue: attributes.colorRaw) ?? .gray
+        let progress = state.total > 0 ? Double(state.done) / Double(state.total) : 0
+        HStack(spacing: 14) {
+            SealFigure(color: color, state: st, animated: false)
+                .frame(width: 64, height: 64)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(attributes.sealName)
+                        .font(.rounded(17, .heavy))
+                        .foregroundStyle(Theme.ink)
+                    Spacer()
+                    Text("\(state.done)/\(state.total)")
+                        .font(.rounded(17, .heavy))
+                        .foregroundStyle(Theme.oceanDark)
+                }
+                Text(state.message)
+                    .font(.rounded(13, .semibold))
+                    .foregroundStyle(Theme.inkSoft)
+                    .lineLimit(1)
+                GeometryReader { g in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(.white)
+                        Capsule().fill(Theme.oceanDeep)
+                            .frame(width: max(8, g.size.width * CGFloat(progress)))
+                    }
+                }
+                .frame(height: 9)
+            }
+        }
     }
 }
