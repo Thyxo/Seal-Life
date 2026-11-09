@@ -90,6 +90,28 @@ struct SealSnapshot: Codable {
     }
 }
 
+extension SealSnapshot {
+    /// Kaldes fra Dynamic Island-knappen: afkrydser én gang mere (aldrig fortryd, så et fejltryk ikke sletter noget).
+    /// Returnerer det opdaterede snapshot, eller nil hvis vanen allerede var klaret.
+    @discardableResult
+    static func completeFromLiveActivity(habitID: String) -> SealSnapshot? {
+        guard var snap = load() else { return nil }
+        let today = DayKey.key()
+        if snap.dayKey != today {
+            snap.dayKey = today
+            for i in snap.habits.indices { snap.habits[i].done = 0 }
+        }
+        guard let i = snap.habits.firstIndex(where: { $0.id == habitID }),
+              snap.habits[i].done < snap.habits[i].target else { return nil }
+        snap.habits[i].done += 1
+        snap.mood = min(Tuning.moodMax, snap.mood + Tuning.moodPerCompletion)
+        snap.fish += Tuning.fishPerCompletion
+        snap.save()
+        PendingQueue.append(PendingToggle(habitID: habitID, dayKey: today, delta: 1))
+        return snap
+    }
+}
+
 struct PendingToggle: Codable {
     var habitID: String
     var dayKey: String
@@ -122,6 +144,17 @@ enum PendingQueue {
 // MARK: - Live Activity
 
 #if canImport(ActivityKit)
+/// Én vane, som Live Activity'en viser (holdes lille – hele ContentState skal under 4 KB).
+struct LiveHabit: Codable, Hashable, Identifiable {
+    var id: String
+    var name: String
+    var icon: String
+    var target: Int
+    var done: Int
+
+    var isDone: Bool { done >= target }
+}
+
 struct SealActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         var mood: Double
@@ -130,6 +163,14 @@ struct SealActivityAttributes: ActivityAttributes {
         var total: Int
         var place: String
         var message: String
+        /// Dagens vaner i rækkefølge. Valgfri, så aktiviteter fra en ældre version stadig kan læses.
+        var habits: [LiveHabit]? = nil
+
+        var habitList: [LiveHabit] { habits ?? [] }
+        var next: LiveHabit? { habitList.first { !$0.isDone } }
+        var allDone: Bool { total > 0 && done >= total }
+        var remaining: Int { max(0, total - done) }
+        var progress: Double { total > 0 ? min(1, Double(done) / Double(total)) : 0 }
     }
 
     var sealName: String
